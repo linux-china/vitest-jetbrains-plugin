@@ -3,8 +3,8 @@
 <!-- Plugin description -->
 A simple WebStorm plugin to run Vitest test from Gutter.
 
-* Green Run icon means just run once
-* Vitest Run icon means run with watch mode
+* Green Run icon means to run once only
+* Vitest Run icon means to run with watch mode
 
 <!-- Plugin description end -->
 
