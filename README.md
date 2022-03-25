@@ -1,22 +1,30 @@
 # vitest-jetbrains-plugin
 
 <!-- Plugin description -->
-A simple WebStorm plugin to run Vitest test from Gutter
+A simple WebStorm plugin to run Vitest test from Gutter.
+
+* Green Run icon means just run once
+* Vitest Run icon means run with watch mode
+
 <!-- Plugin description end -->
 
-## Installation
+# Screenshot
 
-- Using IDE built-in plugin system:
+![Vitest](screenshot.png)
 
-  <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>Marketplace</kbd> > <kbd>Search for "vitest"</kbd> >
-  <kbd>Install Plugin</kbd>
+# Installation
 
 - Manually:
 
   Download the [latest release](https://github.com/linux-china/vitest-jetbrains-plugin/releases/latest) and install it manually using
   <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>⚙️</kbd> > <kbd>Install plugin from disk...</kbd>
-       
-# Todo 
+
+- Using IDE built-in plugin system: not available now
+
+  <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>Marketplace</kbd> > <kbd>Search for "vitest"</kbd> >
+  <kbd>Install Plugin</kbd>
+
+# Todo
 
 * Performance: check Vitest available from package.json
 * Color output
