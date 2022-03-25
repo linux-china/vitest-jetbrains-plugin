@@ -10,6 +10,7 @@
     <extensions defaultExtensionNs="com.intellij">
         <codeInsight.lineMarkerProvider language="JavaScript" implementationClass="com.github.linuxchina.jetbrains.plugins.vitest.VitestRunnerMarkerProvider"/>
         <codeInsight.lineMarkerProvider language="JavaScript" implementationClass="com.github.linuxchina.jetbrains.plugins.vitest.VitestWatchedRunnerMarkerProvider"/>
+        <fileIconProvider implementation="com.github.linuxchina.jetbrains.plugins.vitest.VitestFileIconProvider"/>
     </extensions>
 
 </idea-plugin>
