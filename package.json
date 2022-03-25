@@ -1,0 +1,25 @@
+{
+  "name": "vitest-demo",
+  "version": "0.0.1",
+  "description": "vitest-demo",
+  "main": "index.js",
+  "scripts": {
+    "single-test": "vitest run -t 'demo2' tests/basic.test.ts ",
+    "suite-test": "vitest run -t 'suite' basic.test.ts "
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/linux-china/vitest-jetbrains-plugin.git"
+  },
+  "author": "linux_china <libing.chen@gmail.com>",
+  "license": "Apache License 2.0",
+  "bugs": {
+    "url": "https://github.com/linux-china/vitest-jetbrains-plugin/issues"
+  },
+  "homepage": "https://github.com/linux-china/vitest-jetbrains-plugin#readme",
+  "devDependencies": {
+    "typescript": "^4.6.3",
+    "vitest": "^0.7.11"
+  }
+}
+
