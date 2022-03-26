@@ -1,5 +1,6 @@
 package com.github.linuxchina.jetbrains.plugins.vitest
 
+import com.github.linuxchina.jetbrains.plugins.vitest.VitestBaseRunLineMarkerProvider.Companion.nodeBinDir
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.Executor
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -34,6 +35,7 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
         val vitestIcon = IconLoader.getIcon("/vitest-16.png", VitestRunnerMarkerProvider::class.java)
         val runIcon = IconLoader.getIcon("/runConfigurations/testState/run.svg", AllIcons::class.java)
         val runRunIcon = IconLoader.getIcon("/runConfigurations/testState/run_run.svg", AllIcons::class.java)
+        const val nodeBinDir = "node_modules/.bin/"
     }
 
     fun isVitestTestMethod(jsCallExpression: JSCallExpression): Boolean {
@@ -64,9 +66,9 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
         val relativePath = VfsUtil.getRelativePath(jsCallExpression.containingFile.virtualFile, projectDir)
         val testName = arguments[0].text.trim('\'').trim('"')
         val vitestCommand = if (watch) {
-            "node_modules/.bin/vitest -t '${testName}' $relativePath"
+            "${nodeBinDir}vitest -t '${testName}' $relativePath"
         } else {
-            "node_modules/.bin/vitest run -t '${testName}' $relativePath"
+            "${nodeBinDir}vitest run -t '${testName}' $relativePath"
         }
         runCommand(
             project,
@@ -103,5 +105,13 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
 class RunViteProfile(commandLine: GeneralCommandLine, originalCommand: String) : RunAnythingRunProfile(commandLine, originalCommand) {
     override fun getIcon(): Icon {
         return VitestBaseRunLineMarkerProvider.vitestIcon
+    }
+
+    override fun getName(): String {
+        return if (originalCommand.startsWith(nodeBinDir)) {
+            originalCommand.substring(nodeBinDir.length + 1)
+        } else {
+            originalCommand;
+        }
     }
 }
