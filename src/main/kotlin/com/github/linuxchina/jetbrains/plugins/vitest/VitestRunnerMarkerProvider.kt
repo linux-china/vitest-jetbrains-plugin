@@ -21,11 +21,17 @@ class VitestRunnerMarkerProvider : VitestBaseRunLineMarkerProvider() {
     override fun getLineMarkerInfo(psiElement: PsiElement): LineMarkerInfo<*>? {
         if (psiElement is JSCallExpression) {
             if (isVitestTestMethod(psiElement)) {
+                val testMethod = psiElement.firstChild.text
+                val markIcon = if (testMethod.startsWith("describe")) {
+                    runRunIcon
+                } else {
+                    runIcon
+                }
                 val testName = psiElement.arguments[0].text.trim('\'').trim('"')
                 return LineMarkerInfo(
                     psiElement,
                     psiElement.textRange,
-                    icon,
+                    markIcon,
                     { _: PsiElement? ->
                         "Run $testName"
                     },
