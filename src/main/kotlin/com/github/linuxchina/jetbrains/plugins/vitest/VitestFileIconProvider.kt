@@ -8,7 +8,7 @@ import javax.swing.Icon
 class VitestFileIconProvider : FileIconProvider {
     override fun getIcon(file: VirtualFile, flags: Int, project: Project?): Icon? {
         return if (file.name == "vite.config.ts") {
-            VitestBaseRunLineMarkerProvider.vitestIcon
+            vitestIcon
         } else {
             null
         }

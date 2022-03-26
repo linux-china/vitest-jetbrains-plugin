@@ -8,7 +8,6 @@ import com.intellij.execution.configurations.PtyCommandLine
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.lineMarker.RunLineMarkerProvider
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
-import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.runAnything.RunAnythingCache
 import com.intellij.ide.actions.runAnything.commands.RunAnythingCommandCustomizer
@@ -21,7 +20,6 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -32,9 +30,6 @@ import javax.swing.Icon
 open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
     companion object {
         val vitestTestMethodNames = listOf("test", "it", "describe")
-        val vitestIcon = IconLoader.getIcon("/vitest-16.png", VitestRunnerMarkerProvider::class.java)
-        val runIcon = IconLoader.getIcon("/runConfigurations/testState/run.svg", AllIcons::class.java)
-        val runRunIcon = IconLoader.getIcon("/runConfigurations/testState/run_run.svg", AllIcons::class.java)
         const val nodeBinDir = "node_modules/.bin/"
     }
 
@@ -64,7 +59,9 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
         val project = jsCallExpression.project
         val projectDir = project.guessProjectDir()!!
         val relativePath = VfsUtil.getRelativePath(jsCallExpression.containingFile.virtualFile, projectDir)
-        val testName = arguments[0].text.trim('\'').trim('"')
+        val testName = arguments[0].text.trim {
+            it == '\'' || it == '"'
+        }
         val vitestCommand = if (watch) {
             "${nodeBinDir}vitest -t '${testName}' $relativePath"
         } else {
@@ -104,14 +101,14 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
 
 class RunViteProfile(commandLine: GeneralCommandLine, originalCommand: String) : RunAnythingRunProfile(commandLine, originalCommand) {
     override fun getIcon(): Icon {
-        return VitestBaseRunLineMarkerProvider.vitestIcon
+        return vitestIcon
     }
 
     override fun getName(): String {
         return if (originalCommand.startsWith(nodeBinDir)) {
-            originalCommand.substring(nodeBinDir.length + 1)
+            originalCommand.substring(nodeBinDir.length)
         } else {
-            originalCommand;
+            originalCommand
         }
     }
 }
