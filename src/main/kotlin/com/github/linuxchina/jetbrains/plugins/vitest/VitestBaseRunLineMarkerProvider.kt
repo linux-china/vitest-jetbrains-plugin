@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -62,8 +63,7 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
         val testName = arguments[0].text.trim {
             it == '\'' || it == '"'
         }
-        val os = System.getProperty("os.name").lowercase()
-        val (binDir, command) = if (os.contains("win")) {
+        val (binDir, command) = if (SystemInfo.isWindows) {
             "${projectDir.path.replace('/', '\\')}\\${nodeBinDir.replace('/', '\\')}" to "vitest.CMD"
         } else {
            nodeBinDir to "vitest"
