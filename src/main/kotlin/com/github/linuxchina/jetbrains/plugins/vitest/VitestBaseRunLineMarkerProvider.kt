@@ -83,9 +83,6 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
 
     open fun runCommand(project: Project, workDirectory: VirtualFile, commandString: String, executor: Executor, dataContext: DataContext) {
         var commandDataContext = dataContext
-        val commands: MutableCollection<String> = RunAnythingCache.getInstance(project).state.commands
-        commands.remove(commandString)
-        commands.add(commandString)
         commandDataContext = RunAnythingCommandCustomizer.customizeContext(commandDataContext)
         val initialCommandLine = GeneralCommandLine(ParametersListUtil.parse(commandString, false, true))
             .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
