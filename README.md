@@ -32,8 +32,7 @@ For Vitest support in WebStorm, please vote here: https://youtrack.jetbrains.com
 
 # Todo
 
-* Performance: check Vitest available from package.json
-* Color output
+* Color output on console for Linux and Mac
 
 # References
 
