@@ -1,6 +1,5 @@
 package com.github.linuxchina.jetbrains.plugins.vitest
 
-import com.github.linuxchina.jetbrains.plugins.vitest.VitestBaseRunLineMarkerProvider.Companion.nodeBinDir
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.Executor
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -66,7 +65,7 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
         val (binDir, command) = if (SystemInfo.isWindows) {
             "${projectDir.path.replace('/', '\\')}\\${nodeBinDir.replace('/', '\\')}" to "vitest.CMD"
         } else {
-           nodeBinDir to "vitest"
+            nodeBinDir to "vitest"
         }
         val vitestCommand = if (watch) {
             "${binDir}${command} -t '${testName}' $relativePath"
@@ -111,8 +110,8 @@ class RunViteProfile(commandLine: GeneralCommandLine, originalCommand: String) :
     }
 
     override fun getName(): String {
-        return if (originalCommand.startsWith(nodeBinDir)) {
-            originalCommand.substring(nodeBinDir.length)
+        return if (originalCommand.contains("node_modules") && originalCommand.contains(".bin")) {
+            originalCommand.substring(originalCommand.indexOf(".bin") + 5)
         } else {
             originalCommand
         }
