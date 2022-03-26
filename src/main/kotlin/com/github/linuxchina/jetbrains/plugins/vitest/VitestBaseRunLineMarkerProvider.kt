@@ -62,10 +62,16 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
         val testName = arguments[0].text.trim {
             it == '\'' || it == '"'
         }
-        val vitestCommand = if (watch) {
-            "${nodeBinDir}vitest -t '${testName}' $relativePath"
+        val os = System.getProperty("os.name").lowercase()
+        val (binDir, command) = if (os.contains("win")) {
+            "${projectDir.path.replace('/', '\\')}\\${nodeBinDir.replace('/', '\\')}" to "vitest.CMD"
         } else {
-            "${nodeBinDir}vitest run -t '${testName}' $relativePath"
+           nodeBinDir to "vitest"
+        }
+        val vitestCommand = if (watch) {
+            "${binDir}${command} -t '${testName}' $relativePath"
+        } else {
+            "${binDir}${command} run -t '${testName}' $relativePath"
         }
         runCommand(
             project,
