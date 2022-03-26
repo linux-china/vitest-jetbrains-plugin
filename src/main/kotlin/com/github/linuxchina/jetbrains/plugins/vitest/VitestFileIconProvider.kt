@@ -7,10 +7,10 @@ import javax.swing.Icon
 
 class VitestFileIconProvider : FileIconProvider {
     override fun getIcon(file: VirtualFile, flags: Int, project: Project?): Icon? {
-        return if (file.name == "vite.config.ts") {
-            vitestIcon
-        } else {
-            null
+        return when(file.name) {
+            "vite.config.ts", "vite.config.mjs", "vite.config.js", "vite.config.cjs" -> viteIcon
+            "vitest.config.ts", "vitest.config.mjs", "vitest.config.js", "vitest.config.cjs" -> vitestIcon
+            else -> null
         }
     }
 }
