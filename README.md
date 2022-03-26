@@ -12,6 +12,12 @@ A simple WebStorm plugin to run Vitest test from Gutter.
 
 ![Vitest](screenshot.png)
 
+# Attention 
+
+This plugin just a temp solution before official Vitest support from WebStorm. 
+I think JetBrains people will do this job, and they know Vitest is great framework.
+For Vitest support in WebStorm, please vote here: https://youtrack.jetbrains.com/issue/WEB-54437 
+
 # Installation
 
 - Manually:
