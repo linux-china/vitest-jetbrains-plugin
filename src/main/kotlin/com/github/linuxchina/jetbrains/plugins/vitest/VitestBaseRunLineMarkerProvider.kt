@@ -63,9 +63,11 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
         val packageJson = PackageJsonUtil.findUpPackageJson(testedVirtualFile)
         if (packageJson != null) {
             val packageJsonDir = packageJson.parent
-            val vitestBin = packageJsonDir.findFileByRelativePath("${nodeBinDir}vitest")
-            if (vitestBin != null) {
-                workDir = packageJsonDir
+            if (packageJsonDir != workDir) {
+                val vitestBin = packageJsonDir.findFileByRelativePath("${nodeBinDir}vitest")
+                if (vitestBin != null) {
+                    workDir = packageJsonDir
+                }
             }
         }
         val relativePath = VfsUtil.getRelativePath(testedVirtualFile, workDir)
