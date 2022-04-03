@@ -8,9 +8,9 @@ import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.lineMarker.RunLineMarkerProvider
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.actions.runAnything.RunAnythingCache
 import com.intellij.ide.actions.runAnything.commands.RunAnythingCommandCustomizer
 import com.intellij.ide.actions.runAnything.execution.RunAnythingRunProfile
+import com.intellij.lang.javascript.buildTools.npm.PackageJsonUtil
 import com.intellij.lang.javascript.psi.JSCallExpression
 import com.intellij.lang.javascript.psi.JSDestructuringElement
 import com.intellij.lang.javascript.psi.JSReferenceExpression
@@ -57,13 +57,19 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
     fun runSingleVitest(jsCallExpression: JSCallExpression, watch: Boolean) {
         val arguments = jsCallExpression.arguments
         val project = jsCallExpression.project
-        val projectDir = project.guessProjectDir()!!
-        val relativePath = VfsUtil.getRelativePath(jsCallExpression.containingFile.virtualFile, projectDir)
+        val testedVirtualFile = jsCallExpression.containingFile.virtualFile
+        val packageJson = PackageJsonUtil.findUpPackageJson(testedVirtualFile)
+        val workDir = if (packageJson != null) {
+            packageJson.parent
+        } else {
+            project.guessProjectDir()!!
+        }
+        val relativePath = VfsUtil.getRelativePath(testedVirtualFile, workDir)
         val testName = arguments[0].text.trim {
             it == '\'' || it == '"'
         }
         val (binDir, command) = if (SystemInfo.isWindows) {
-            "${projectDir.path.replace('/', '\\')}\\${nodeBinDir.replace('/', '\\')}" to "vitest.CMD"
+            "${workDir.path.replace('/', '\\')}\\${nodeBinDir.replace('/', '\\')}" to "vitest.CMD"
         } else {
             nodeBinDir to "vitest"
         }
@@ -74,7 +80,7 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
         }
         runCommand(
             project,
-            projectDir,
+            workDir,
             vitestCommand,
             DefaultRunExecutor.getRunExecutorInstance(),
             SimpleDataContext.getProjectContext(project)
