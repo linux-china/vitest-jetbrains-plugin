@@ -39,7 +39,7 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
             val resolvedElement = firstChild.resolve()
             if (resolvedElement != null) {
                 val filePath = resolvedElement.containingFile.virtualFile.toString()
-                if (filePath.contains("/vitest/")) {
+                if (filePath.contains("/vitest/") || filePath.contains("\\vitest\\")) {
                     return true
                 } else {
                     val declareBlock = resolvedElement.parentOfType<JSDestructuringElement>()
