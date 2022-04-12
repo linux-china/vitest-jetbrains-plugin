@@ -11,6 +11,7 @@
         <codeInsight.lineMarkerProvider language="JavaScript" implementationClass="com.github.linuxchina.jetbrains.plugins.vitest.VitestRunnerMarkerProvider"/>
         <codeInsight.lineMarkerProvider language="JavaScript" implementationClass="com.github.linuxchina.jetbrains.plugins.vitest.VitestWatchedRunnerMarkerProvider"/>
         <fileIconProvider implementation="com.github.linuxchina.jetbrains.plugins.vitest.VitestFileIconProvider"/>
+        <projectService serviceImplementation="com.github.linuxchina.jetbrains.plugins.vitest.VitestService"/>
     </extensions>
 
 </idea-plugin>
