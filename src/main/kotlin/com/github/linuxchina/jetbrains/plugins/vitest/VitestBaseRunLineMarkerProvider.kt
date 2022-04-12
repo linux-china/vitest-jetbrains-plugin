@@ -36,6 +36,10 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
     fun isVitestTestMethod(jsCallExpression: JSCallExpression): Boolean {
         val firstChild = jsCallExpression.firstChild
         if (firstChild != null && firstChild is JSReferenceExpression && vitestTestMethodNames.contains(firstChild.text)) {
+            val project = jsCallExpression.project
+            if (project.getService(VitestService::class.java).globalServiceEnabled) {
+                return true
+            }
             val resolvedElement = firstChild.resolve()
             if (resolvedElement != null) {
                 val filePath = resolvedElement.containingFile.virtualFile.toString()
