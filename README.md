@@ -12,11 +12,28 @@ A simple WebStorm plugin to run Vitest test from Gutter.
 
 ![Vitest](screenshot.png)
 
-# Attention 
+# Attention
 
-This plugin just a temp solution before official Vitest support from WebStorm. 
+This plugin just a temp solution before official Vitest support from WebStorm.
 I think JetBrains people will do this job, and they know Vitest is great framework.
-For Vitest support in WebStorm, please vote here: https://youtrack.jetbrains.com/issue/WEB-54437 
+For Vitest support in WebStorm, please vote here: https://youtrack.jetbrains.com/issue/WEB-54437
+
+# Vitest global support
+
+Please enable `globals: true` for test in vite.config.ts
+
+```typescript
+// vite.config.ts
+import {defineConfig} from 'vitest/config'
+
+export default defineConfig({
+    test: {
+        globals: true,
+    },
+})
+```
+
+**Attention**: Please reload(close/open) project if you enable `globals: true` first time.
 
 # Installation
 
