@@ -52,5 +52,6 @@ export default defineConfig({
 * Color output on console for Linux and Mac
 
 # References
-
+      
+* Vitest VS Code plugin: https://marketplace.visualstudio.com/items?itemName=ZixuanChen.vitest-explorer
 * Building a Plugin for WebStorm – Tutorial for JavaScript Developers: https://blog.jetbrains.com/webstorm/2021/09/building-a-plugin-for-webstorm-part-1/
