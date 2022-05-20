@@ -78,7 +78,8 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
         val testName = arguments[0].text.trim {
             it == '\'' || it == '"'
         }
-        val (binDir, command) = if (SystemInfo.isWindows) {
+        val isWSL = workDir.path.contains("wsl$")
+        val (binDir, command) = if (SystemInfo.isWindows && !isWSL) {
             "${workDir.path.replace('/', '\\')}\\${nodeBinDir.replace('/', '\\')}" to "vitest.CMD"
         } else {
             nodeBinDir to "vitest"
