@@ -139,7 +139,7 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
                     it.processHandler!!.addProcessListener(object : OutputListener(StringBuilder(), StringBuilder()) {
                         override fun processTerminated(event: ProcessEvent) {
                             super.processTerminated(event)
-                            val succeeded = event.exitCode == 0 || output.stdout.contains("0 failed")
+                            val succeeded = event.exitCode == 0 || !output.stdout.contains("Failed Tests")
                             if ((testFailures.contains(testUniqueName) && succeeded)
                                 || (!succeeded && !testFailures.contains(testUniqueName))
                             ) { //refresh required
