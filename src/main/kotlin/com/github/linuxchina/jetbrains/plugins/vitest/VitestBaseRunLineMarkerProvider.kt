@@ -1,11 +1,14 @@
 package com.github.linuxchina.jetbrains.plugins.vitest
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.Executor
+import com.intellij.execution.OutputListener
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.PtyCommandLine
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.lineMarker.RunLineMarkerProvider
+import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.runAnything.commands.RunAnythingCommandCustomizer
@@ -16,6 +19,7 @@ import com.intellij.lang.javascript.psi.JSDestructuringElement
 import com.intellij.lang.javascript.psi.JSReferenceExpression
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.Messages
@@ -23,6 +27,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiManager
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.execution.ParametersListUtil
 import javax.swing.Icon
@@ -31,6 +36,7 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
     companion object {
         val vitestTestMethodNames = listOf("test", "it", "describe")
         const val nodeBinDir = "node_modules/.bin/"
+        val testFailures = mutableMapOf<String, String>()
     }
 
     fun isVitestTestMethod(jsCallExpression: JSCallExpression): Boolean {
@@ -78,6 +84,7 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
         val testName = arguments[0].text.trim {
             it == '\'' || it == '"'
         }
+        val testUniqueName = "${relativePath}:${testName}"
         val isWSL = workDir.path.contains("wsl$")
         val (binDir, command) = if (SystemInfo.isWindows && !isWSL) {
             "${workDir.path.replace('/', '\\')}\\${nodeBinDir.replace('/', '\\')}" to "vitest.CMD"
@@ -92,13 +99,25 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
         runCommand(
             project,
             workDir,
+            testedVirtualFile,
+            testUniqueName,
+            watch,
             vitestCommand,
             DefaultRunExecutor.getRunExecutorInstance(),
             SimpleDataContext.getProjectContext(project)
         )
     }
 
-    open fun runCommand(project: Project, workDirectory: VirtualFile, commandString: String, executor: Executor, dataContext: DataContext) {
+    open fun runCommand(
+        project: Project,
+        workDirectory: VirtualFile,
+        testedVirtualFile: VirtualFile,
+        testUniqueName: String,
+        watch: Boolean,
+        commandString: String,
+        executor: Executor,
+        dataContext: DataContext
+    ) {
         var commandDataContext = dataContext
         commandDataContext = RunAnythingCommandCustomizer.customizeContext(commandDataContext)
         val initialCommandLine = GeneralCommandLine(ParametersListUtil.parse(commandString, false, true))
@@ -108,9 +127,43 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
         try {
             val generalCommandLine = if (Registry.`is`("run.anything.use.pty", false)) PtyCommandLine(commandLine) else commandLine
             val runAnythingRunProfile = RunViteProfile(generalCommandLine, commandString)
-            ExecutionEnvironmentBuilder.create(project, executor, runAnythingRunProfile)
-                .dataContext(commandDataContext)
-                .buildAndExecute()
+            if (watch) { // watch mode
+                ExecutionEnvironmentBuilder.create(project, executor, runAnythingRunProfile)
+                    .dataContext(commandDataContext)
+                    .buildAndExecute()
+            } else {
+                val environment = ExecutionEnvironmentBuilder.create(project, executor, runAnythingRunProfile)
+                    .dataContext(commandDataContext)
+                    .build()
+                environment.runner.execute(environment) {
+                    it.processHandler!!.addProcessListener(object : OutputListener(StringBuilder(), StringBuilder()) {
+                        override fun processTerminated(event: ProcessEvent) {
+                            super.processTerminated(event)
+                            val succeeded = event.exitCode == 0 || output.stdout.contains("0 failed")
+                            if ((testFailures.contains(testUniqueName) && succeeded)
+                                || (!succeeded && !testFailures.contains(testUniqueName))
+                            ) { //refresh required
+                                ApplicationManager.getApplication().runReadAction {
+                                    if (succeeded) {
+                                        testFailures.remove(testUniqueName)
+                                    } else {
+                                        testFailures[testUniqueName] = "failed"
+                                    }
+                                    PsiManager.getInstance(project).findFile(testedVirtualFile)?.let { psiFile ->
+                                        DaemonCodeAnalyzer.getInstance(project).restart(psiFile)
+                                    }
+                                }
+                            } else {
+                                if (succeeded) {
+                                    testFailures.remove(testUniqueName)
+                                } else {
+                                    testFailures[testUniqueName] = "failed"
+                                }
+                            }
+                        }
+                    })
+                }
+            }
         } catch (e: ExecutionException) {
             Messages.showInfoMessage(project, e.message, IdeBundle.message("run.anything.console.error.title"))
         }
