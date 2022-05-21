@@ -6,4 +6,5 @@ import com.intellij.openapi.util.IconLoader
 val viteIcon = IconLoader.getIcon("/vite-16.png", VitestRunnerMarkerProvider::class.java)
 val vitestIcon = IconLoader.getIcon("/vitest-16.png", VitestRunnerMarkerProvider::class.java)
 val runIcon = IconLoader.getIcon("/runConfigurations/testState/run.svg", AllIcons::class.java)
+val redRunIcon = IconLoader.getIcon("/runConfigurations/testState/red2.svg", AllIcons::class.java)
 val runRunIcon = IconLoader.getIcon("/runConfigurations/testState/run_run.svg", AllIcons::class.java)
