@@ -22,7 +22,7 @@ class VitestRunnerMarkerProvider : VitestBaseRunLineMarkerProvider() {
 
     override fun getLineMarkerInfo(psiElement: PsiElement): LineMarkerInfo<*>? {
         if (psiElement is JSCallExpression) {
-            if (isVitestTestMethod(psiElement)) {
+            if (isVitestTestMethod(psiElement) && psiElement.arguments.isNotEmpty()) {
                 val testMethod = psiElement.firstChild.text
                 val testName = psiElement.arguments[0].text.trim {
                     it == '\'' || it == '"'
