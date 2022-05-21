@@ -3,6 +3,8 @@ package com.github.linuxchina.jetbrains.plugins.vitest
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.lang.javascript.psi.JSCallExpression
 import com.intellij.openapi.editor.markup.GutterIconRenderer
+import com.intellij.openapi.project.guessProjectDir
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiElement
 import javax.swing.Icon
 
@@ -22,12 +24,22 @@ class VitestRunnerMarkerProvider : VitestBaseRunLineMarkerProvider() {
         if (psiElement is JSCallExpression) {
             if (isVitestTestMethod(psiElement)) {
                 val testMethod = psiElement.firstChild.text
+                val testName = psiElement.arguments[0].text.trim {
+                    it == '\'' || it == '"'
+                }
                 val markIcon = if (testMethod.startsWith("describe")) {
                     runRunIcon
                 } else {
-                    runIcon
+                    val testedVirtualFile = psiElement.containingFile.virtualFile
+                    val workDir = psiElement.project.guessProjectDir()!!
+                    val relativePath = VfsUtil.getRelativePath(testedVirtualFile, workDir)
+                    val testUniqueName = "${relativePath}:${testName}"
+                    if (testFailures.contains(testUniqueName)) {
+                        redRunIcon
+                    } else {
+                        runIcon
+                    }
                 }
-                val testName = psiElement.arguments[0].text.trim('\'').trim('"')
                 return LineMarkerInfo(
                     psiElement,
                     psiElement.textRange,
