@@ -1,7 +1,7 @@
 # vitest-jetbrains-plugin
 
 <!-- Plugin description -->
-A simple WebStorm plugin to run Vitest tests from gutter.
+A simple WebStorm plugin to run Vitest tests.
 
 * Green Run icon means to run once only
 * Vitest Run icon means to run with watch mode
@@ -72,10 +72,6 @@ You can run `webstorm-integration` from WebStorm with debug mode, then you can d
 
   <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>Marketplace</kbd> > <kbd>Search for "vitest"</kbd> >
   <kbd>Install Plugin</kbd>
-
-# Todo
-
-* Color output on console for Linux and Mac
 
 # References
 
