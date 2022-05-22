@@ -8,6 +8,7 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.PtyCommandLine
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.lineMarker.RunLineMarkerProvider
+import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.ide.IdeBundle
@@ -23,6 +24,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
@@ -33,11 +35,11 @@ import com.intellij.util.execution.ParametersListUtil
 import javax.swing.Icon
 
 open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
-    val testResults = mutableMapOf<String, AssertionResult>()
 
     companion object {
         val vitestTestMethodNames = listOf("test", "it", "describe")
         const val nodeBinDir = "node_modules/.bin/"
+        val testResults = mutableMapOf<String, AssertionResult>()
     }
 
     fun isVitestTestMethod(jsCallExpression: JSCallExpression): Boolean {
@@ -131,9 +133,19 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
             val generalCommandLine = if (Registry.`is`("run.anything.use.pty", false)) PtyCommandLine(commandLine) else commandLine
             val runAnythingRunProfile = RunViteProfile(generalCommandLine, commandString)
             if (watch) { // watch mode
-                ExecutionEnvironmentBuilder.create(project, executor, runAnythingRunProfile)
+                val environment = ExecutionEnvironmentBuilder.create(project, executor, runAnythingRunProfile)
                     .dataContext(commandDataContext)
-                    .buildAndExecute()
+                    .build()
+                environment.runner.execute(environment) {
+                    it.processHandler!!.addProcessListener(object : ProcessAdapter() {
+                        override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
+                            if (event.text.contains("Waiting for file changes") || event.text.contains("Watching for file changes")) {
+                                val succeeded = event.text.contains("PASS")
+                                processTestResult(succeeded, testUniqueName, testName, project, testedVirtualFile)
+                            }
+                        }
+                    })
+                }
             } else {
                 val environment = ExecutionEnvironmentBuilder.create(project, executor, runAnythingRunProfile)
                     .dataContext(commandDataContext)
@@ -143,39 +155,42 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
                         override fun processTerminated(event: ProcessEvent) {
                             super.processTerminated(event)
                             val succeeded = event.exitCode == 0
-                            val testStatus = if (succeeded) "passed" else "failed"
-                            val assertionResult = AssertionResult().apply {
-                                startTime = System.currentTimeMillis()
-                                fullName = testUniqueName
-                                title = testName
-                                status = testStatus
-                            }
-                            val previousAssertionResult = findTestResult(project, testedVirtualFile, testName)
-                            var refreshRequired = false
-                            if (previousAssertionResult == null) {
-                                if (!succeeded) {
-                                    refreshRequired = true;
-                                }
-                            } else {
-                                if (previousAssertionResult.isSuccess() != succeeded) {
-                                    refreshRequired = true
-                                }
-                            }
-                            testResults[testUniqueName] = assertionResult
-                            if (refreshRequired) { //refresh required
-                                ApplicationManager.getApplication().runReadAction {
-                                    PsiManager.getInstance(project).findFile(testedVirtualFile)?.let { psiFile ->
-                                        DaemonCodeAnalyzer.getInstance(project).restart(psiFile)
-                                    }
-                                }
-                            }
-
+                            processTestResult(succeeded, testUniqueName, testName, project, testedVirtualFile)
                         }
                     })
                 }
             }
         } catch (e: ExecutionException) {
             Messages.showInfoMessage(project, e.message, IdeBundle.message("run.anything.console.error.title"))
+        }
+    }
+
+    private fun processTestResult(succeeded: Boolean, testUniqueName: String, testName: String, project: Project, testedVirtualFile: VirtualFile) {
+        val testStatus = if (succeeded) "passed" else "failed"
+        val assertionResult = AssertionResult().apply {
+            startTime = System.currentTimeMillis()
+            fullName = testUniqueName
+            title = testName
+            status = testStatus
+        }
+        val previousAssertionResult = findTestResult(project, testedVirtualFile, testName)
+        var refreshRequired = false
+        if (previousAssertionResult == null) {
+            if (!succeeded) {
+                refreshRequired = true;
+            }
+        } else {
+            if (previousAssertionResult.isSuccess() != succeeded) {
+                refreshRequired = true
+            }
+        }
+        testResults[testUniqueName] = assertionResult
+        if (refreshRequired) { //refresh required
+            ApplicationManager.getApplication().runReadAction {
+                PsiManager.getInstance(project).findFile(testedVirtualFile)?.let { psiFile ->
+                    DaemonCodeAnalyzer.getInstance(project).restart(psiFile)
+                }
+            }
         }
     }
 
