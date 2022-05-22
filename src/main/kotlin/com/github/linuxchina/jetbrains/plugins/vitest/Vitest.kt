@@ -10,3 +10,5 @@ val redRunIcon = IconLoader.getIcon("/runConfigurations/testState/red2.svg", All
 val runRunIcon = IconLoader.getIcon("/runConfigurations/testState/run_run.svg", AllIcons::class.java)
 val jsTestIcon = icons.JavaScriptLanguageIcons.FileTypes.JsTestFile
 val tsTestIcon = icons.JavaScriptLanguageIcons.FileTypes.TypeScriptTest
+val testError = AllIcons.RunConfigurations.TestError
+val testPassed = AllIcons.RunConfigurations.TestPassed
