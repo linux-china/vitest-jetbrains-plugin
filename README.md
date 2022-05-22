@@ -11,7 +11,7 @@ A simple WebStorm plugin to run Vitest test from Gutter.
 ```
   "scripts": {
     "test": "vitest --watch",
-    "webstorm-integration": "vitest --watch --reporter=verbose --reporter=json --outputFile=.vitest-result.json",
+    "webstorm-integration": "vitest --watch --reporter=dot --reporter=json --outputFile=.vitest-result.json",
   },
 ```
 
@@ -53,7 +53,7 @@ Now Vitest plugin doesn't support Vitest test debug, but you can debug Vitest te
 ```
   "scripts": {
     "debug-demo": "vitest -t 'demo' test/demo.test.ts",
-    "webstorm-integration": "vitest --watch --reporter=verbose --reporter=json --outputFile=.vitest-result.json",
+    "webstorm-integration": "vitest --watch --reporter=dot --reporter=json --outputFile=.vitest-result.json",
   },
 ```
 
