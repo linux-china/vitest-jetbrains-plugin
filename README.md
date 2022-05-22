@@ -46,6 +46,19 @@ export default defineConfig({
 
 **Attention**: Please reload(close/open) project if you enable `globals: true` first time.
 
+# How to debug Vitest tests?
+
+Now Vitest plugin doesn't support Vitest test debug, but you can debug Vitest tests by running npm scripts with debug mode in WebStorm.
+
+```
+  "scripts": {
+    "debug-demo": "vitest -t 'demo' test/demo.test.ts",
+    "webstorm-integration": "vitest --watch --reporter=verbose --reporter=json --outputFile=.vitest-result.json",
+  },
+```
+
+You can run `webstorm-integration` from WebStorm with debug mode, then you can debug all test methods.
+
 # Installation
 
 - Manually:
