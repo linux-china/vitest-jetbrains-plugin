@@ -1,12 +1,12 @@
 # vitest-jetbrains-plugin
 
 <!-- Plugin description -->
-A simple WebStorm plugin to run Vitest test from Gutter.
+A simple WebStorm plugin to run Vitest tests from gutter.
 
 * Green Run icon means to run once only
 * Vitest Run icon means to run with watch mode
-* Failure detection to run test method
-* Vitest json reporter integration with Vitest run icons by `.vitest-result.json` file
+* Test failure detection to remark run icon
+* Vitest json reporter integration by `.vitest-result.json` file
 
 ```
   "scripts": {
