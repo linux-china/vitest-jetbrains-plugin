@@ -15,6 +15,8 @@ A simple WebStorm plugin to run Vitest tests from gutter.
   },
 ```
 
+* Vitest toolWindow to display test statistics from `.vitest-result.json` file
+
 Please install [Awesome Console](https://plugins.jetbrains.com/plugin/7677-awesome-console) for code link/navigation from console.
 
 <!-- Plugin description end -->
