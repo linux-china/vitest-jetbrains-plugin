@@ -53,21 +53,21 @@ class VitestToolWindowPanel(private val project: Project) : SimpleToolWindowPane
         val projectDir = project.guessProjectDir()?.canonicalPath ?: ""
         ApplicationManager.getApplication().invokeLater {
             vitestTreeModel.removeAllChildren()
-            vitestRestResult.testResults?.forEach { testResult ->
-                val testFileNode = DefaultMutableTreeNode(testFileName(projectDir, testResult.name!!))
-                testResult.assertionResults?.forEach { assertionResult ->
-                    testFileNode.add(DefaultMutableTreeNode(assertionResult))
-                }
-                vitestTreeModel.add(testFileNode)
-            }
+            fillVitestResults(projectDir, vitestRestResult)
             (vitestTree!!.model as DefaultTreeModel).reload()
             expandVitestTree()
         }
     }
 
-    fun switchToHelp() {
-        setContent(usagePanel)
-        this.mode = "help"
+    private fun fillVitestResults(projectDir: String, vitestRestResult: VitestTestResult) {
+        vitestTreeModel.userObject = "Vitest ${vitestRestResult.getStatistics()}"
+        vitestRestResult.testResults?.forEach { testResult ->
+            val testFileNode = DefaultMutableTreeNode(testFileName(projectDir, testResult.name!!) + " ${testResult.getStatistics()}")
+            testResult.assertionResults?.forEach { assertionResult ->
+                testFileNode.add(DefaultMutableTreeNode(assertionResult))
+            }
+            vitestTreeModel.add(testFileNode)
+        }
     }
 
     private fun switchToScriptInfoPanel() {
@@ -79,13 +79,7 @@ class VitestToolWindowPanel(private val project: Project) : SimpleToolWindowPane
         val vitestRestResult = project.getService(VitestService::class.java).vitestRestResult
         val projectDir = project.guessProjectDir()?.canonicalPath ?: ""
         if (vitestRestResult != null) {
-            vitestRestResult.testResults?.forEach { testResult ->
-                val testFileNode = DefaultMutableTreeNode(testFileName(projectDir, testResult.name!!))
-                testResult.assertionResults?.forEach { assertionResult ->
-                    testFileNode.add(DefaultMutableTreeNode(assertionResult))
-                }
-                vitestTreeModel.add(testFileNode)
-            }
+            fillVitestResults(projectDir, vitestRestResult)
         }
         vitestTree = Tree(DefaultTreeModel(vitestTreeModel))
         vitestTree!!.cellRenderer = VitestTreeCellRender()
@@ -97,7 +91,10 @@ class VitestToolWindowPanel(private val project: Project) : SimpleToolWindowPane
                     if (node.isLeaf) {
                         val assertionResult = node.userObject as AssertionResult
                         val testName = assertionResult.title
-                        val filePath = (node.parent as DefaultMutableTreeNode).userObject.toString()
+                        var filePath = (node.parent as DefaultMutableTreeNode).userObject.toString()
+                        if (filePath.contains(" ")) {
+                            filePath = filePath.substring(0, filePath.lastIndexOf(' '))
+                        }
                         project.guessProjectDir()?.let {
                             it.findFileByRelativePath(filePath)?.let { testedFile ->
                                 val psiFile = PsiManager.getInstance(project).findFile(testedFile)
