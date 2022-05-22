@@ -2,11 +2,13 @@
 
 # vitest-jetbrains-plugin Changelog
 
-## [0.3.0]
+## [0.4.0]
 
 ### Added
 
-- Add indication for failure test method
+- Test failure auto detection
+- Vitest toolWindow
+- `.vitest-result.json` json reporter file support
 
 ## [0.2.1]
 
