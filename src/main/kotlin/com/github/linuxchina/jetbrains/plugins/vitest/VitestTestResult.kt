@@ -28,6 +28,10 @@ class VitestTestResult {
         }
         return null
     }
+
+    fun getStatistics(): String {
+        return "${numPassedTests}/${numFailedTests}"
+    }
 }
 
 class TestResult {
@@ -37,6 +41,19 @@ class TestResult {
     var message: String? = null
     var name: String? = null
     var assertionResults: List<AssertionResult>? = null
+
+    fun getStatistics(): String {
+        var failedCount = 0
+        var successCount = 0
+        assertionResults?.forEach {
+            if (it.isSuccess()) {
+                successCount += 1
+            } else {
+                failedCount += 1
+            }
+        }
+        return "${successCount}/${failedCount}"
+    }
 }
 
 class AssertionResult {
