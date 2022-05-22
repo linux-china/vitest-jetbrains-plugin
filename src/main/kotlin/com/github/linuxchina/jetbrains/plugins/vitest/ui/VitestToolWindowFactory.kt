@@ -62,7 +62,7 @@ class VitestToolWindowPanel(private val project: Project) : SimpleToolWindowPane
     private fun fillVitestResults(projectDir: String, vitestRestResult: VitestTestResult) {
         vitestTreeModel.userObject = "Vitest ${vitestRestResult.getStatistics()}"
         vitestRestResult.testResults?.forEach { testResult ->
-            val testFileNode = DefaultMutableTreeNode(testFileName(projectDir, testResult.name!!) + " ${testResult.getStatistics()}")
+            val testFileNode = DefaultMutableTreeNode(TestFileNodeData(testFileName(projectDir, testResult.name!!), testResult.getStatistics()))
             testResult.assertionResults?.forEach { assertionResult ->
                 testFileNode.add(DefaultMutableTreeNode(assertionResult))
             }
@@ -91,12 +91,9 @@ class VitestToolWindowPanel(private val project: Project) : SimpleToolWindowPane
                     if (node.isLeaf) {
                         val assertionResult = node.userObject as AssertionResult
                         val testName = assertionResult.title
-                        var filePath = (node.parent as DefaultMutableTreeNode).userObject.toString()
-                        if (filePath.contains(" ")) {
-                            filePath = filePath.substring(0, filePath.lastIndexOf(' '))
-                        }
+                        val testFileNodeData = (node.parent as DefaultMutableTreeNode).userObject as TestFileNodeData
                         project.guessProjectDir()?.let {
-                            it.findFileByRelativePath(filePath)?.let { testedFile ->
+                            it.findFileByRelativePath(testFileNodeData.name)?.let { testedFile ->
                                 val psiFile = PsiManager.getInstance(project).findFile(testedFile)
                                 val lineNum = psiFile!!.text.lines().indexOfFirst { line ->
                                     line.contains("'${testName}'") || line.contains("\"${testName}\"")
@@ -134,16 +131,16 @@ class VitestTreeCellRender : DefaultTreeCellRenderer() {
         if (leaf) {
             val assertionResult = node.userObject as AssertionResult
             if (assertionResult.isSuccess()) {
-                setLeafIcon(runIcon)
+                setLeafIcon(testPassed)
             } else {
-                setLeafIcon(redRunIcon)
+                setLeafIcon(testError)
             }
         } else if (node.isRoot) {
             setOpenIcon(vitestIcon)
             setClosedIcon(vitestIcon)
         } else {
-            val fileName = node.userObject.toString()
-            if (fileName.contains(".ts")) {
+            val testFileNodeData = node.userObject as TestFileNodeData
+            if (testFileNodeData.name.contains(".ts")) {
                 setOpenIcon(tsTestIcon)
                 setClosedIcon(tsTestIcon)
             } else {
@@ -154,6 +151,12 @@ class VitestTreeCellRender : DefaultTreeCellRenderer() {
         return super.getTreeCellRendererComponent(
             tree, value, sel, expanded, leaf, row, hasFocus
         )
+    }
+}
+
+data class TestFileNodeData(val name: String, val statistics: String) {
+    override fun toString(): String {
+        return "$name $statistics"
     }
 }
 
