@@ -8,3 +8,5 @@ val vitestIcon = IconLoader.getIcon("/vitest-16.png", VitestRunnerMarkerProvider
 val runIcon = IconLoader.getIcon("/runConfigurations/testState/run.svg", AllIcons::class.java)
 val redRunIcon = IconLoader.getIcon("/runConfigurations/testState/red2.svg", AllIcons::class.java)
 val runRunIcon = IconLoader.getIcon("/runConfigurations/testState/run_run.svg", AllIcons::class.java)
+val jsTestIcon = icons.JavaScriptLanguageIcons.FileTypes.JsTestFile
+val tsTestIcon = icons.JavaScriptLanguageIcons.FileTypes.TypeScriptTest
