@@ -27,15 +27,13 @@ class VitestRunnerMarkerProvider : VitestBaseRunLineMarkerProvider() {
                 }
                 var tooltip = "Run $testName"
                 var markIcon = runIcon
-                if (testMethod.startsWith("describe")) {
+                val testedVirtualFile = psiElement.containingFile.virtualFile
+                val assertionResult = findTestResult(psiElement.project, testedVirtualFile, testName)
+                if (assertionResult?.isSuccess() == false) {
+                    markIcon = redRunIcon
+                    tooltip = assertionResult.getFailureMessage()
+                } else if (testMethod.startsWith("describe")) {
                     markIcon = runRunIcon
-                } else {
-                    val testedVirtualFile = psiElement.containingFile.virtualFile
-                    val assertionResult = findTestResult(psiElement.project, testedVirtualFile, testName)
-                    if (assertionResult?.isSuccess() == false) {
-                        markIcon = redRunIcon
-                        tooltip = assertionResult.getFailureMessage()
-                    }
                 }
                 return LineMarkerInfo(
                     psiElement,
