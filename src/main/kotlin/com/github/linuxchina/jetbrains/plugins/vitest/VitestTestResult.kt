@@ -58,4 +58,8 @@ class AssertionResult {
         }
         return "Failed"
     }
+
+    override fun toString(): String {
+        return title!!
+    }
 }
