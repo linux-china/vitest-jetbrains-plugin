@@ -1,8 +1,6 @@
 package com.github.linuxchina.jetbrains.plugins.vitest.ui
 
-import com.github.linuxchina.jetbrains.plugins.vitest.VitestService
-import com.github.linuxchina.jetbrains.plugins.vitest.runIcon
-import com.github.linuxchina.jetbrains.plugins.vitest.vitestIcon
+import com.github.linuxchina.jetbrains.plugins.vitest.*
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
@@ -64,13 +62,13 @@ class JBangToolWindowPanel(private val project: Project) : SimpleToolWindowPanel
             vitestRestResult.testResults?.forEach { testResult ->
                 val testFileNode = DefaultMutableTreeNode(testFileName(projectDir, testResult.name!!))
                 testResult.assertionResults?.forEach { assertionResult ->
-                    testFileNode.add(DefaultMutableTreeNode(assertionResult.title))
+                    testFileNode.add(DefaultMutableTreeNode(assertionResult))
                 }
                 vitestTreeModel.add(testFileNode)
             }
         }
         val tree = Tree(vitestTreeModel)
-//         tree.cellRenderer = VitestTreeCellRender()
+        tree.cellRenderer = VitestTreeCellRender()
         return JBScrollPane(tree)
     }
 
@@ -87,17 +85,29 @@ class VitestTreeCellRender : DefaultTreeCellRenderer() {
 
     override fun getTreeCellRendererComponent(tree: JTree, value: Any, sel: Boolean, expanded: Boolean, leaf: Boolean, row: Int, hasFocus: Boolean): Component {
         val node = value as DefaultMutableTreeNode
-        val s = node.userObject.toString()
         if (leaf) {
-            setLeafIcon(runIcon)
-        } else if (s == "Vitest") {
+            val assertionResult = node.userObject as AssertionResult
+            if (assertionResult.isSuccess()) {
+                setLeafIcon(runIcon)
+            } else {
+                setLeafIcon(redRunIcon)
+            }
+        } else if (node.isRoot) {
             setOpenIcon(vitestIcon)
             setClosedIcon(vitestIcon)
         } else {
-            setOpenIcon(defaultOpenIcon)
-            setClosedIcon(defaultClosedIcon)
+            val fileName = node.userObject.toString()
+            if (fileName.contains(".ts")) {
+                setOpenIcon(tsTestIcon)
+                setClosedIcon(tsTestIcon)
+            } else {
+                setOpenIcon(jsTestIcon)
+                setClosedIcon(jsTestIcon)
+            }
         }
-        return this
+        return super.getTreeCellRendererComponent(
+            tree, value, sel, expanded, leaf, row, hasFocus
+        )
     }
 }
 
