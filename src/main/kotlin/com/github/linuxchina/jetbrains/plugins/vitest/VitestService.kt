@@ -5,6 +5,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.linuxchina.jetbrains.plugins.vitest.ui.VitestToolWindowPanel
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -53,13 +54,22 @@ class VitestService(private val project: Project) {
 
     private fun reloadVitestJsonResultFile() {
         project.guessProjectDir()?.let { projectDir ->
-            projectDir.findChild(".vitest-result.json")?.let {
+            projectDir.findChild(".vitest-result.json")?.let { vitestResultJsonFile ->
                 val refreshRequired = vitestRestResult != null
-                vitestRestResult = objectMapper.readValue<VitestTestResult>(it.toNioPath().toFile())
+                vitestRestResult = objectMapper.readValue<VitestTestResult>(vitestResultJsonFile.toNioPath().toFile())
                 if (refreshRequired) {
                     getVitestToolWindowPanel(project)?.refreshVitestTree(project, vitestRestResult!!)
                     ApplicationManager.getApplication().runReadAction {
-                        DaemonCodeAnalyzer.getInstance(project).restart()
+                        val daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(project)
+                        val psiManager = PsiManager.getInstance(project)
+                        // restart opened files
+                        FileEditorManager.getInstance(project).openFiles.filter {
+                            it.name.contains(".ts") || it.name.contains(".js")
+                        }.forEach {
+                            psiManager.findFile(it)?.let { psiFile ->
+                                daemonCodeAnalyzer.restart(psiFile)
+                            }
+                        }
                     }
                 }
             }
