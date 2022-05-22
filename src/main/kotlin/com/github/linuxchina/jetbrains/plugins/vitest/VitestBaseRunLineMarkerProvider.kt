@@ -33,10 +33,11 @@ import com.intellij.util.execution.ParametersListUtil
 import javax.swing.Icon
 
 open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
+    val testResults = mutableMapOf<String, AssertionResult>()
+
     companion object {
         val vitestTestMethodNames = listOf("test", "it", "describe")
         const val nodeBinDir = "node_modules/.bin/"
-        val testFailures = mutableMapOf<String, String>()
     }
 
     fun isVitestTestMethod(jsCallExpression: JSCallExpression): Boolean {
@@ -80,11 +81,10 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
                 }
             }
         }
-        val relativePath = VfsUtil.getRelativePath(testedVirtualFile, workDir)
+        val relativePath = VfsUtil.getRelativePath(testedVirtualFile, workDir)!!
         val testName = arguments[0].text.trim {
             it == '\'' || it == '"'
         }
-        val testUniqueName = "${relativePath}:${testName}"
         val isWSL = workDir.path.contains("wsl$")
         val (binDir, command) = if (SystemInfo.isWindows && !isWSL) {
             "${workDir.path.replace('/', '\\')}\\${nodeBinDir.replace('/', '\\')}" to "vitest.CMD"
@@ -100,7 +100,8 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
             project,
             workDir,
             testedVirtualFile,
-            testUniqueName,
+            relativePath,
+            testName,
             watch,
             vitestCommand,
             DefaultRunExecutor.getRunExecutorInstance(),
@@ -112,7 +113,8 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
         project: Project,
         workDirectory: VirtualFile,
         testedVirtualFile: VirtualFile,
-        testUniqueName: String,
+        relativePath: String,
+        testName: String,
         watch: Boolean,
         commandString: String,
         executor: Executor,
@@ -124,6 +126,7 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
             .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
             .withWorkDirectory(workDirectory.path)
         val commandLine = RunAnythingCommandCustomizer.customizeCommandLine(commandDataContext, workDirectory, initialCommandLine)
+        val testUniqueName = getTestUniqueName(testedVirtualFile, testName)
         try {
             val generalCommandLine = if (Registry.`is`("run.anything.use.pty", false)) PtyCommandLine(commandLine) else commandLine
             val runAnythingRunProfile = RunViteProfile(generalCommandLine, commandString)
@@ -139,27 +142,34 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
                     it.processHandler!!.addProcessListener(object : OutputListener(StringBuilder(), StringBuilder()) {
                         override fun processTerminated(event: ProcessEvent) {
                             super.processTerminated(event)
-                            val succeeded = event.exitCode == 0 || !output.stdout.contains("Failed Tests")
-                            if ((testFailures.contains(testUniqueName) && succeeded)
-                                || (!succeeded && !testFailures.contains(testUniqueName))
-                            ) { //refresh required
+                            val succeeded = event.exitCode == 0
+                            val testStatus = if (succeeded) "passed" else "failed"
+                            val assertionResult = AssertionResult().apply {
+                                startTime = System.currentTimeMillis()
+                                fullName = testUniqueName
+                                title = testName
+                                status = testStatus
+                            }
+                            val previousAssertionResult = findTestResult(project, testedVirtualFile, testName)
+                            var refreshRequired = false
+                            if (previousAssertionResult == null) {
+                                if (!succeeded) {
+                                    refreshRequired = true;
+                                }
+                            } else {
+                                if (previousAssertionResult.isSuccess() != succeeded) {
+                                    refreshRequired = true
+                                }
+                            }
+                            testResults[testUniqueName] = assertionResult
+                            if (refreshRequired) { //refresh required
                                 ApplicationManager.getApplication().runReadAction {
-                                    if (succeeded) {
-                                        testFailures.remove(testUniqueName)
-                                    } else {
-                                        testFailures[testUniqueName] = "failed"
-                                    }
                                     PsiManager.getInstance(project).findFile(testedVirtualFile)?.let { psiFile ->
                                         DaemonCodeAnalyzer.getInstance(project).restart(psiFile)
                                     }
                                 }
-                            } else {
-                                if (succeeded) {
-                                    testFailures.remove(testUniqueName)
-                                } else {
-                                    testFailures[testUniqueName] = "failed"
-                                }
                             }
+
                         }
                     })
                 }
@@ -167,6 +177,27 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
         } catch (e: ExecutionException) {
             Messages.showInfoMessage(project, e.message, IdeBundle.message("run.anything.console.error.title"))
         }
+    }
+
+    fun findTestResult(project: Project, testedVirtualFile: VirtualFile, testName: String): AssertionResult? {
+        val testUniqueName = getTestUniqueName(testedVirtualFile, testName)
+        val testedFilePath = testedVirtualFile.path
+        var assertionResult = testResults[testUniqueName]
+        if (assertionResult == null) {
+            assertionResult = project.getService(VitestService::class.java).findTestResult(testedFilePath, testName)
+        } else {
+            val assertionResult2 = project.getService(VitestService::class.java).findTestResult(testedFilePath, testName)
+            if (assertionResult2?.startTime != null) {
+                if (assertionResult2.startTime!! > assertionResult.startTime!!) {
+                    assertionResult = assertionResult2
+                }
+            }
+        }
+        return assertionResult;
+    }
+
+    private fun getTestUniqueName(testedVirtualFile: VirtualFile, testName: String): String {
+        return "${testedVirtualFile.path}?${testName}"
     }
 
 }
@@ -183,4 +214,5 @@ class RunViteProfile(commandLine: GeneralCommandLine, originalCommand: String) :
             originalCommand
         }
     }
+
 }
