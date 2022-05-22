@@ -3,8 +3,6 @@ package com.github.linuxchina.jetbrains.plugins.vitest
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.lang.javascript.psi.JSCallExpression
 import com.intellij.openapi.editor.markup.GutterIconRenderer
-import com.intellij.openapi.project.guessProjectDir
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiElement
 import javax.swing.Icon
 
@@ -27,17 +25,16 @@ class VitestRunnerMarkerProvider : VitestBaseRunLineMarkerProvider() {
                 val testName = psiElement.arguments[0].text.trim {
                     it == '\'' || it == '"'
                 }
-                val markIcon = if (testMethod.startsWith("describe")) {
-                    runRunIcon
+                var tooltip = "Run $testName"
+                var markIcon = runIcon
+                if (testMethod.startsWith("describe")) {
+                    markIcon = runRunIcon
                 } else {
                     val testedVirtualFile = psiElement.containingFile.virtualFile
-                    val workDir = psiElement.project.guessProjectDir()!!
-                    val relativePath = VfsUtil.getRelativePath(testedVirtualFile, workDir)
-                    val testUniqueName = "${relativePath}:${testName}"
-                    if (testFailures.contains(testUniqueName)) {
-                        redRunIcon
-                    } else {
-                        runIcon
+                    val assertionResult = findTestResult(psiElement.project, testedVirtualFile, testName)
+                    if (assertionResult?.isSuccess() == false) {
+                        markIcon = redRunIcon
+                        tooltip = assertionResult.getFailureMessage()
                     }
                 }
                 return LineMarkerInfo(
@@ -45,7 +42,7 @@ class VitestRunnerMarkerProvider : VitestBaseRunLineMarkerProvider() {
                     psiElement.textRange,
                     markIcon,
                     { _: PsiElement? ->
-                        "Run $testName"
+                        tooltip
                     },
                     { e, elt ->
                         runSingleVitest(psiElement, false)
