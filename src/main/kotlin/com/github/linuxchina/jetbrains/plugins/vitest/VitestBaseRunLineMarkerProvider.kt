@@ -139,8 +139,8 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
                 environment.runner.execute(environment) {
                     it.processHandler!!.addProcessListener(object : ProcessAdapter() {
                         override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
-                            if (event.text.contains("Waiting for file changes") || event.text.contains("Watching for file changes")) {
-                                val succeeded = event.text.contains("PASS")
+                            if (event.text.startsWith("Test Files ")) {
+                                val succeeded = !event.text.contains("failed")
                                 processTestResult(succeeded, testUniqueName, testName, project, testedVirtualFile)
                             }
                         }
