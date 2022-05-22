@@ -10,7 +10,7 @@ Setup:
 
 ```
 "scripts": {
- "webstorm-integration": "vitest --watch --reporter=verbose --reporter=json --outputFile=.vitest-result.json",
+ "webstorm-integration": "vitest --watch --reporter=dot --reporter=json --outputFile=.vitest-result.json",
 }
 ```
 
