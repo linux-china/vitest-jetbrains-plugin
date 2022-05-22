@@ -6,9 +6,9 @@ class VitestTestResult {
     var numPassedTestSuites: Int? = null
     var numFailedTestSuites: Int? = null
     var numPendingTestSuites: Int? = null
-    var numTotalTests: Int? = null
-    var numPassedTests: Int? = null
-    var numFailedTests: Int? = null
+    var numTotalTests: Int = 1
+    var numPassedTests: Int = 0
+    var numFailedTests: Int = 0
     var numPendingTests: Int? = null
     var numTodoTests: Int? = null
     var startTime: Long? = null
@@ -30,13 +30,14 @@ class VitestTestResult {
     }
 
     fun getStatistics(): String {
-        return "${numPassedTests}/${numFailedTests}"
+        val percentage = (numPassedTests * 100) / numTotalTests
+        return "${numPassedTests}/${numTotalTests}(${percentage}%) tests passed"
     }
 }
 
 class TestResult {
-    var startTime: Long? = null
-    var endTime: Long? = null
+    var startTime: Long = 0
+    var endTime: Long = 0
     var status: String? = null
     var message: String? = null
     var name: String? = null
@@ -52,7 +53,14 @@ class TestResult {
                 failedCount += 1
             }
         }
-        return "${successCount}/${failedCount}"
+        val totalCount = failedCount + successCount
+        val percentage = if (totalCount > 0) {
+            (successCount * 100) / totalCount
+        } else {
+            100
+        }
+        val duration = endTime - startTime
+        return "${successCount}/${totalCount}(${percentage}%) ${duration}ms"
     }
 }
 
@@ -61,7 +69,7 @@ class AssertionResult {
     var fullName: String? = null
     var status: String? = null
     var title: String? = null
-    var duration: Int? = null
+    var duration: Int = 0
     var startTime: Long? = null
     var failureMessages: List<String>? = null
 
@@ -77,6 +85,7 @@ class AssertionResult {
     }
 
     override fun toString(): String {
-        return title!!
+        return "${title} ${duration}ms"
     }
+
 }
