@@ -65,15 +65,15 @@ Or you can use standard `Node.js` app run configuration to debug test file, plea
 
 # Installation
 
+- Using IDE built-in plugin system: https://plugins.jetbrains.com/plugin/19220-vitest-runner
+
+  <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>Marketplace</kbd> > <kbd>Search for "vitest"</kbd> >
+  <kbd>Install Plugin</kbd>
+
 - Manually:
 
   Download the [latest release](https://github.com/linux-china/vitest-jetbrains-plugin/releases/latest) and install it manually using
   <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>⚙️</kbd> > <kbd>Install plugin from disk...</kbd>
-
-- Using IDE built-in plugin system: not available now
-
-  <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>Marketplace</kbd> > <kbd>Search for "vitest"</kbd> >
-  <kbd>Install Plugin</kbd>
 
 # References
 
