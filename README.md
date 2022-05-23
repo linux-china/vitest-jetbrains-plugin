@@ -5,7 +5,7 @@ A simple WebStorm plugin to run Vitest tests.
 
 * Green Run icon means to run once only
 * Vitest Run icon means to run with watch mode
-* Test failure detection to remark run icon
+* Test failure detection to remark run icon as red
 * Vitest json reporter integration by `.vitest-result.json` file
 
 ```
