@@ -61,6 +61,8 @@ Now Vitest plugin doesn't support Vitest test debug, but you can debug Vitest te
 
 You can run `webstorm-integration` from WebStorm with debug mode, then you can debug all test methods.
 
+Or you can use standard `Node.js` app run configuration to debug test file, please refer https://vitest.dev/guide/debugging.html#intellij-idea
+
 # Installation
 
 - Manually:
