@@ -9,6 +9,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
@@ -20,6 +21,10 @@ class VitestService(private val project: Project) {
     var globalServiceEnabled = false
     private val objectMapper = ObjectMapper()
     var vitestRestResult: VitestTestResult? = null
+
+    companion object {
+        val vitestConfigFileNames = listOf("vite.config.ts", "vite.config.js", "vite.config.mjs", "vitest.config.ts", "vitest.config.js", "vitest.config.mjs")
+    }
 
     init {
         checkViteConfig()
@@ -42,7 +47,14 @@ class VitestService(private val project: Project) {
 
     private fun checkViteConfig() {
         project.guessProjectDir()?.let { projectDir ->
-            projectDir.findChild("vite.config.ts")?.let {
+            var viteConfig: VirtualFile? = null
+            for (configFileName in vitestConfigFileNames) {
+                viteConfig = projectDir.findChild(configFileName)
+                if (viteConfig != null) {
+                    break
+                }
+            }
+            viteConfig?.let {
                 val vitestConfigFile = PsiManager.getInstance(project).findFile(it)!!
                 val content = vitestConfigFile.text
                 if (content.contains("test:") && content.contains("globals: true")) {
