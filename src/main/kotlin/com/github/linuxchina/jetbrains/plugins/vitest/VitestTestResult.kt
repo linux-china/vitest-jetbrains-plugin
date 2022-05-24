@@ -41,6 +41,7 @@ class TestResult {
     var status: String? = null
     var message: String? = null
     var name: String? = null
+    var displayName: String? = null
     var assertionResults: List<AssertionResult>? = null
 
     fun getStatistics(): String {
