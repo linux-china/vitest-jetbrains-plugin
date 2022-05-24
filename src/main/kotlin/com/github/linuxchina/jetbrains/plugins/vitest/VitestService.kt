@@ -1,5 +1,6 @@
 package com.github.linuxchina.jetbrains.plugins.vitest
 
+import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.linuxchina.jetbrains.plugins.vitest.ui.VitestToolWindowPanel
@@ -19,7 +20,9 @@ import com.intellij.psi.PsiManager
 
 class VitestService(private val project: Project) {
     var globalServiceEnabled = false
-    private val objectMapper = ObjectMapper()
+    private val objectMapper = ObjectMapper().apply {
+        configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+    }
     var vitestRestResult: VitestTestResult? = null
 
     companion object {
