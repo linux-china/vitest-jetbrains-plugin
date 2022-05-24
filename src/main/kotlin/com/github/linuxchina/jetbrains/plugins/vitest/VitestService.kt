@@ -23,7 +23,7 @@ class VitestService(private val project: Project) {
     var vitestRestResult: VitestTestResult? = null
 
     companion object {
-        val vitestConfigFileNames = listOf("vite.config.ts", "vite.config.js", "vite.config.mjs", "vitest.config.ts", "vitest.config.js", "vitest.config.mjs")
+        val vitestConfigFileNames = listOf("vitest.config.ts", "vite.config.ts", "vite.config.js", "vite.config.mjs")
     }
 
     init {
