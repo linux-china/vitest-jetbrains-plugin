@@ -37,7 +37,7 @@ class VitestToolWindowPanel(private val project: Project) : SimpleToolWindowPane
     private val usagePanel = UsagePanel("Vitest plugin usage:\n")
     private val vitestTreeModel = DefaultMutableTreeNode("Vitest")
     private var vitestTree: Tree? = null
-    private val jbangToolWindow = vitestTree()
+    private var vitestToolWindow: JComponent? = null
     var mode: String = "help"
 
     init {
@@ -71,7 +71,10 @@ class VitestToolWindowPanel(private val project: Project) : SimpleToolWindowPane
     }
 
     private fun switchToScriptInfoPanel() {
-        setContent(jbangToolWindow)
+        if (vitestToolWindow == null) {
+            vitestToolWindow = vitestTree()
+        }
+        setContent(vitestToolWindow!!)
         this.mode = "vitest"
     }
 
@@ -91,15 +94,18 @@ class VitestToolWindowPanel(private val project: Project) : SimpleToolWindowPane
                     if (node.isLeaf) {
                         val assertionResult = node.userObject as AssertionResult
                         val testName = assertionResult.title
-                        val testFileNodeData = (node.parent as DefaultMutableTreeNode).userObject as TestFileNodeData
-                        project.guessProjectDir()?.let {
-                            it.findFileByRelativePath(testFileNodeData.name)?.let { testedFile ->
-                                val psiFile = PsiManager.getInstance(project).findFile(testedFile)
-                                val lineNum = psiFile!!.text.lines().indexOfFirst { line ->
-                                    line.contains("'${testName}'") || line.contains("\"${testName}\"")
+                        val userObject = (node.parent as DefaultMutableTreeNode).userObject
+                        if (userObject is TestFileNodeData) {
+                            val testFileNodeData = userObject
+                            project.guessProjectDir()?.let {
+                                it.findFileByRelativePath(testFileNodeData.name)?.let { testedFile ->
+                                    val psiFile = PsiManager.getInstance(project).findFile(testedFile)
+                                    val lineNum = psiFile!!.text.lines().indexOfFirst { line ->
+                                        line.contains("'${testName}'") || line.contains("\"${testName}\"")
+                                    }
+                                    val fileEditorManager = FileEditorManager.getInstance(project)
+                                    fileEditorManager.openTextEditor(OpenFileDescriptor(project, testedFile, lineNum, 0), true)
                                 }
-                                val fileEditorManager = FileEditorManager.getInstance(project)
-                                fileEditorManager.openTextEditor(OpenFileDescriptor(project, testedFile, lineNum, 0), true)
                             }
                         }
                     }
@@ -128,9 +134,9 @@ class VitestTreeCellRender : DefaultTreeCellRenderer() {
 
     override fun getTreeCellRendererComponent(tree: JTree, value: Any, sel: Boolean, expanded: Boolean, leaf: Boolean, row: Int, hasFocus: Boolean): Component {
         val node = value as DefaultMutableTreeNode
-        if (leaf) {
-            val assertionResult = node.userObject as AssertionResult
-            if (assertionResult.isSuccess()) {
+        val userObject = node.userObject
+        if (leaf && userObject is AssertionResult) {
+            if (userObject.isSuccess()) {
                 setLeafIcon(testPassed)
             } else {
                 setLeafIcon(testError)
@@ -138,9 +144,8 @@ class VitestTreeCellRender : DefaultTreeCellRenderer() {
         } else if (node.isRoot) {
             setOpenIcon(vitestIcon)
             setClosedIcon(vitestIcon)
-        } else {
-            val testFileNodeData = node.userObject as TestFileNodeData
-            if (testFileNodeData.name.contains(".ts")) {
+        } else if (userObject is TestFileNodeData) {
+            if (userObject.name.contains(".ts")) {
                 setOpenIcon(tsTestIcon)
                 setClosedIcon(tsTestIcon)
             } else {
