@@ -62,11 +62,14 @@ class VitestToolWindowPanel(private val project: Project) : SimpleToolWindowPane
     private fun fillVitestResults(projectDir: String, vitestRestResult: VitestTestResult) {
         vitestTreeModel.userObject = "Vitest ${vitestRestResult.getStatistics()}"
         vitestRestResult.testResults?.forEach { testResult ->
-            val testFileNode = DefaultMutableTreeNode(TestFileNodeData(testFileName(projectDir, testResult.name!!), testResult.getStatistics()))
-            testResult.assertionResults?.forEach { assertionResult ->
-                testFileNode.add(DefaultMutableTreeNode(assertionResult))
+            val assertionResults = testResult.assertionResults
+            if (!assertionResults.isNullOrEmpty()) {
+                val testFileNode = DefaultMutableTreeNode(TestFileNodeData(testFileName(projectDir, testResult.name!!), testResult.getStatistics()))
+                assertionResults.forEach { assertionResult ->
+                    testFileNode.add(DefaultMutableTreeNode(assertionResult))
+                }
+                vitestTreeModel.add(testFileNode)
             }
-            vitestTreeModel.add(testFileNode)
         }
     }
 
