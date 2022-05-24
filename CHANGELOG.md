@@ -2,6 +2,13 @@
 
 # vitest-jetbrains-plugin Changelog
 
+## [0.4.1]
+
+### Added
+
+- Support vite.config.ts and vitest.config.ts
+- Bug fix test file without test methods for Vitest toolWindow
+
 ## [0.4.0]
 
 ### Added
