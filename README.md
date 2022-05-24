@@ -33,7 +33,7 @@ For Vitest support in WebStorm, please vote here: https://youtrack.jetbrains.com
 
 # Vitest global support
 
-Please enable `globals: true` for test in vite.config.ts
+Please enable `globals: true` for test in `vite.config.ts`: not `vitest.config.ts`
 
 ```typescript
 // vite.config.ts
