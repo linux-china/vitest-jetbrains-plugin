@@ -14,6 +14,7 @@ import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.runAnything.commands.RunAnythingCommandCustomizer
 import com.intellij.ide.actions.runAnything.execution.RunAnythingRunProfile
+import com.intellij.javascript.nodejs.interpreter.NodeJsInterpreterManager
 import com.intellij.lang.javascript.buildTools.npm.PackageJsonUtil
 import com.intellij.lang.javascript.psi.JSCallExpression
 import com.intellij.lang.javascript.psi.JSDestructuringElement
@@ -32,6 +33,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.execution.ParametersListUtil
+import java.io.File
 import javax.swing.Icon
 
 open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
@@ -128,6 +130,14 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
             .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
             .withWorkDirectory(workDirectory.path)
         val commandLine = RunAnythingCommandCustomizer.customizeCommandLine(commandDataContext, workDirectory, initialCommandLine)
+        // use configured nodejs interpreter
+        val nodeJsInterpreter = NodeJsInterpreterManager.getInstance(project).interpreter
+        if (nodeJsInterpreter != null) {
+            val environment = commandLine.environment
+            val nodePath = nodeJsInterpreter.referenceName
+            val nodeBinDir = nodePath.substring(0, nodePath.lastIndexOfAny(charArrayOf('/', '\\')))
+            environment["PATH"] = nodeBinDir + File.pathSeparator + environment["PATH"]
+        }
         val testUniqueName = getTestUniqueName(testedVirtualFile, testName)
         try {
             val generalCommandLine = if (Registry.`is`("run.anything.use.pty", false)) PtyCommandLine(commandLine) else commandLine
