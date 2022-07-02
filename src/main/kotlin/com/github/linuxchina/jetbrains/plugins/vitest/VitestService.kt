@@ -10,7 +10,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
@@ -26,7 +25,20 @@ class VitestService(private val project: Project) {
     var vitestRestResult: VitestTestResult? = null
 
     companion object {
-        val vitestConfigFileNames = listOf("vitest.config.ts", "vite.config.ts", "vite.config.js", "vite.config.mjs")
+        val vitestConfigFileNames = listOf(
+            "vite.config.ts",
+            "vite.config.mjs",
+            "vite.config.js",
+            "vite.config.cjs",
+            "vite.config.mts",
+            "vite.config.cts",
+            "vitest.config.ts",
+            "vitest.config.mjs",
+            "vitest.config.js",
+            "vitest.config.cjs",
+            "vitest.config.mts",
+            "vitest.config.cts"
+        )
     }
 
     init {
@@ -50,20 +62,12 @@ class VitestService(private val project: Project) {
 
     private fun checkViteConfig() {
         project.guessProjectDir()?.let { projectDir ->
-            var viteConfig: VirtualFile? = null
-            for (configFileName in vitestConfigFileNames) {
-                viteConfig = projectDir.findChild(configFileName)
-                if (viteConfig != null) {
-                    break
+            globalServiceEnabled = vitestConfigFileNames.filter { projectDir.findChild(it) != null }
+                .map { projectDir.findChild(it)!! }
+                .map { PsiManager.getInstance(project).findFile(it)!!.text }
+                .any {
+                    it.contains("test:") && it.contains("globals: true")
                 }
-            }
-            viteConfig?.let {
-                val vitestConfigFile = PsiManager.getInstance(project).findFile(it)!!
-                val content = vitestConfigFile.text
-                if (content.contains("test:") && content.contains("globals: true")) {
-                    globalServiceEnabled = true
-                }
-            }
         }
     }
 
