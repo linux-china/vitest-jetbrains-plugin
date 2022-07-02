@@ -1,6 +1,13 @@
 <!-- Keep a Changelog guide -> https://keepachangelog.com -->
 
 # vitest-jetbrains-plugin Changelog
+             
+## [Unreleased]
+
+### Added
+
+- File icon for vite.config.cts and vite.config.mts
+- Use configured nodejs interpreter to run tests
 
 ## [0.4.1]
 
