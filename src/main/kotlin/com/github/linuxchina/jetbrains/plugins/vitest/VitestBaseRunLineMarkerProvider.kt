@@ -88,7 +88,7 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
         val relativePath = VfsUtil.getRelativePath(testedVirtualFile, workDir)!!
         val testName = arguments[0].text.trim {
             it == '\'' || it == '"'
-        }
+        }.replace("'","\\'")
         val isWSL = workDir.path.contains("wsl$")
         val (binDir, command) = if (SystemInfo.isWindows && !isWSL) {
             "${workDir.path.replace('/', '\\')}\\${nodeBinDir.replace('/', '\\')}" to "vitest.CMD"
