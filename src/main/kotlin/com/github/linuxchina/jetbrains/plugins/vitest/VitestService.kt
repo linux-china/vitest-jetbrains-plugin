@@ -19,6 +19,7 @@ import com.intellij.psi.PsiManager
 
 class VitestService(private val project: Project) {
     var globalServiceEnabled = false
+    var yarn3Enabled = false
     private val objectMapper = ObjectMapper().apply {
         configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
     }
@@ -68,6 +69,10 @@ class VitestService(private val project: Project) {
                 .any {
                     it.contains("test:") && it.contains("globals: true")
                 }
+            projectDir.findChild("package.json")?.let {
+                val packageJsonText = PsiManager.getInstance(project).findFile(it)!!.text
+                yarn3Enabled = packageJsonText.contains("packageManager") && packageJsonText.contains("yarn@3")
+            }
         }
     }
 
