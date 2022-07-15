@@ -45,6 +45,15 @@ export default defineConfig({
     },
 })
 ```
+          
+**Exclude jest**: jest is removed from the devDependencies, anyway, jest still resolved and installed by co dependency during `npm install`. 
+You can use following solution to exclude jest: 
+
+```
+"scripts": {
+    "postinstall": "rm -rf node_modules/jest*; rm -rf node_modules/@jest"
+}
+```
 
 **Attention**: Please reload(close/open) project if you enable `globals: true` first time.
 
