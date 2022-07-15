@@ -1,13 +1,17 @@
 <!-- Keep a Changelog guide -> https://keepachangelog.com -->
 
 # vitest-jetbrains-plugin Changelog
-             
+
 ## [Unreleased]
+
+## [0.5.0]
 
 ### Added
 
 - File icon for vite.config.cts and vite.config.mts
 - Use configured nodejs interpreter to run tests
+- Use `npm exec --` or `npm exec --` to run vitest: avoid OS detection, color output
+- Quotation mark escape for test name
 
 ## [0.4.1]
 
