@@ -26,7 +26,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -40,7 +39,8 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
 
     companion object {
         val vitestTestMethodNames = listOf("test", "it", "describe")
-        const val nodeBinDir = "node_modules/.bin/"
+        const val npmPrefix = "npm exec -- vitest "
+        const val yarn3Prefix = "yarn exec -- vitest "
         val testResults = mutableMapOf<String, AssertionResult>()
     }
 
@@ -79,26 +79,22 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
         if (packageJson != null) {
             val packageJsonDir = packageJson.parent
             if (packageJsonDir != workDir) {
-                val vitestBin = packageJsonDir.findFileByRelativePath("${nodeBinDir}vitest")
-                if (vitestBin != null) {
-                    workDir = packageJsonDir
-                }
+                workDir = packageJsonDir
             }
         }
         val relativePath = VfsUtil.getRelativePath(testedVirtualFile, workDir)!!
         val testName = arguments[0].text.trim {
             it == '\'' || it == '"'
-        }.replace("'","\\'")
-        val isWSL = workDir.path.contains("wsl$")
-        val (binDir, command) = if (SystemInfo.isWindows && !isWSL) {
-            "${workDir.path.replace('/', '\\')}\\${nodeBinDir.replace('/', '\\')}" to "vitest.CMD"
+        }.replace("'", "\\'")
+        val prefix = if (project.getService(VitestService::class.java).yarn3Enabled) {
+            yarn3Prefix
         } else {
-            nodeBinDir to "vitest"
+            npmPrefix
         }
         val vitestCommand = if (watch) {
-            "${binDir}${command} -t '${testName}' $relativePath"
+            "$prefix -t '${testName}' $relativePath"
         } else {
-            "${binDir}${command} run -t '${testName}' $relativePath"
+            "$prefix run -t '${testName}' $relativePath"
         }
         runCommand(
             project,
@@ -127,16 +123,16 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
         var commandDataContext = dataContext
         commandDataContext = RunAnythingCommandCustomizer.customizeContext(commandDataContext)
         val initialCommandLine = GeneralCommandLine(ParametersListUtil.parse(commandString, false, true))
-            .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
+            .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.SYSTEM)
             .withWorkDirectory(workDirectory.path)
         val commandLine = RunAnythingCommandCustomizer.customizeCommandLine(commandDataContext, workDirectory, initialCommandLine)
         // use configured nodejs interpreter
         val nodeJsInterpreter = NodeJsInterpreterManager.getInstance(project).interpreter
         if (nodeJsInterpreter != null) {
-            val environment = commandLine.environment
+            val effectiveEnvironment = commandLine.effectiveEnvironment
             val nodePath = nodeJsInterpreter.referenceName
             val nodeBinDir = nodePath.substring(0, nodePath.lastIndexOfAny(charArrayOf('/', '\\')))
-            environment["PATH"] = nodeBinDir + File.pathSeparator + environment["PATH"]
+            commandLine.environment["PATH"] = nodeBinDir + File.pathSeparator + effectiveEnvironment["PATH"]
         }
         val testUniqueName = getTestUniqueName(testedVirtualFile, testName)
         try {
@@ -233,8 +229,9 @@ class RunViteProfile(commandLine: GeneralCommandLine, originalCommand: String) :
     }
 
     override fun getName(): String {
-        return if (originalCommand.contains("node_modules") && originalCommand.contains(".bin")) {
-            originalCommand.substring(originalCommand.indexOf(".bin") + 5)
+        val key = " exec -- "
+        return if (originalCommand.contains(key)) {
+            originalCommand.substring(originalCommand.indexOf(key) + key.length)
         } else {
             originalCommand
         }
