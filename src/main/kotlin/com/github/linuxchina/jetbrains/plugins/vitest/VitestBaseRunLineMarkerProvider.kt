@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -40,7 +41,9 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
     companion object {
         val vitestTestMethodNames = listOf("test", "it", "describe")
         const val npmPrefix = "npm exec -- vitest "
+        const val npmWindowsPrefix = "npm.cmd exec -- vitest "
         const val yarn3Prefix = "yarn exec -- vitest "
+        const val yarn3WindowsPrefix = "yarn.cmd exec -- vitest "
         val testResults = mutableMapOf<String, AssertionResult>()
     }
 
@@ -87,9 +90,17 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
             it == '\'' || it == '"'
         }.replace("'", "\\'")
         val prefix = if (project.getService(VitestService::class.java).yarn3Enabled) {
-            yarn3Prefix
+            if (SystemInfo.isWindows) {
+                yarn3WindowsPrefix
+            } else {
+                yarn3Prefix
+            }
         } else {
-            npmPrefix
+            if (SystemInfo.isWindows) {
+                npmWindowsPrefix
+            } else {
+                npmPrefix
+            }
         }
         val vitestCommand = if (watch) {
             "$prefix -t '${testName}' $relativePath"
