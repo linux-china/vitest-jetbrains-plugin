@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+## [0.5.1]
+
+### Fixed
+
+- Add `.cmd` ext name for `npm` and `yarn` commands on Windows
+
 ## [0.5.0]
 
 ### Added
