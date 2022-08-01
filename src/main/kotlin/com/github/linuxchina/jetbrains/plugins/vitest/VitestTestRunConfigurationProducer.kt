@@ -28,10 +28,12 @@ class VitestTestRunConfigurationProducer : LazyRunConfigurationProducer<NodeJsRu
             return false
         }
         val applicationParameters = configuration.applicationParameters!!
+        val runnerName = configuration.name
         val testName = VitestBaseRunLineMarkerProvider.getVitestTestName(jsCallExpression)
         val fileName = location.virtualFile!!.name
         val filePath = applicationParameters.substring(applicationParameters.lastIndexOf(' ') + 1)
-        return file.path.endsWith(filePath) && applicationParameters.contains("${testName}@${fileName}")
+        val uniqueName = "${testName}@${fileName}"
+        return file.path.endsWith(filePath) && runnerName.contains(uniqueName)
     }
 
     override fun setupConfigurationFromContext(configuration: NodeJsRunConfiguration, context: ConfigurationContext, sourceElement: Ref<PsiElement>): Boolean {
