@@ -28,7 +28,7 @@ class VitestTestRunConfigurationProducer : LazyRunConfigurationProducer<NodeJsRu
         if (jsCallExpression !is JSCallExpression) {
             return false
         }
-        val applicationParameters = configuration.applicationParameters!!
+        val applicationParameters = configuration.applicationParameters ?: return false
         val runnerName = configuration.name
         val testName = VitestBaseRunLineMarkerProvider.getVitestTestName(jsCallExpression)
         val filePath = applicationParameters.substring(applicationParameters.lastIndexOf(' ') + 1)
@@ -55,7 +55,7 @@ class VitestTestRunConfigurationProducer : LazyRunConfigurationProducer<NodeJsRu
             "./node_modules/vitest/vitest.mjs"
         }
         configuration.inputPath = vitestMjsPath
-        configuration.applicationParameters = "run -t '${testName}' $relativePath"
+        configuration.applicationParameters = "run --threads false -t '${testName}' $relativePath"
         return true
     }
 
