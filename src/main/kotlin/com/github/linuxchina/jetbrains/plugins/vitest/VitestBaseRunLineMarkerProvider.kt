@@ -40,11 +40,171 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
 
     companion object {
         val vitestTestMethodNames = listOf("test", "it", "describe")
-        const val npmPrefix = "npm exec -- vitest "
-        const val npmWindowsPrefix = "npm.cmd exec -- vitest "
-        const val yarn3Prefix = "yarn exec -- vitest "
-        const val yarn3WindowsPrefix = "yarn.cmd exec -- vitest "
-        val testResults = mutableMapOf<String, AssertionResult>()
+        private const val npmPrefix = "npm exec -- vitest "
+        private const val npmWindowsPrefix = "npm.cmd exec -- vitest "
+        private const val yarn3Prefix = "yarn exec -- vitest "
+        private const val yarn3WindowsPrefix = "yarn.cmd exec -- vitest "
+        private val testResults = mutableMapOf<String, AssertionResult>()
+
+        fun runSingleVitest(jsCallExpression: JSCallExpression, watch: Boolean) {
+            val arguments = jsCallExpression.arguments
+            val project = jsCallExpression.project
+            val testedVirtualFile = jsCallExpression.containingFile.virtualFile
+            var workDir = project.guessProjectDir()!!
+            // sub project support #5
+            val packageJson = PackageJsonUtil.findUpPackageJson(testedVirtualFile)
+            if (packageJson != null) {
+                val packageJsonDir = packageJson.parent
+                if (packageJsonDir != workDir) {
+                    workDir = packageJsonDir
+                }
+            }
+            val relativePath = VfsUtil.getRelativePath(testedVirtualFile, workDir)!!
+            val testName = arguments[0].text.trim {
+                it == '\'' || it == '"'
+            }.replace("'", "\\'")
+            val prefix = if (project.getService(VitestService::class.java).yarn3Enabled) {
+                if (SystemInfo.isWindows) {
+                    yarn3WindowsPrefix
+                } else {
+                    yarn3Prefix
+                }
+            } else {
+                if (SystemInfo.isWindows) {
+                    npmWindowsPrefix
+                } else {
+                    npmPrefix
+                }
+            }
+            val vitestCommand = if (watch) {
+                "$prefix -t '${testName}' $relativePath"
+            } else {
+                "$prefix run -t '${testName}' $relativePath"
+            }
+            runCommand(
+                project,
+                workDir,
+                testedVirtualFile,
+                relativePath,
+                testName,
+                watch,
+                vitestCommand,
+                DefaultRunExecutor.getRunExecutorInstance(),
+                SimpleDataContext.getProjectContext(project)
+            )
+        }
+
+        private fun runCommand(
+            project: Project,
+            workDirectory: VirtualFile,
+            testedVirtualFile: VirtualFile,
+            relativePath: String,
+            testName: String,
+            watch: Boolean,
+            commandString: String,
+            executor: Executor,
+            dataContext: DataContext
+        ) {
+            var commandDataContext = dataContext
+            commandDataContext = RunAnythingCommandCustomizer.customizeContext(commandDataContext)
+            val initialCommandLine = GeneralCommandLine(ParametersListUtil.parse(commandString, false, true))
+                .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.SYSTEM)
+                .withWorkDirectory(workDirectory.path)
+            val commandLine = RunAnythingCommandCustomizer.customizeCommandLine(commandDataContext, workDirectory, initialCommandLine)
+            // use configured nodejs interpreter
+            val nodeJsInterpreter = NodeJsInterpreterManager.getInstance(project).interpreter
+            if (nodeJsInterpreter != null) {
+                val effectiveEnvironment = commandLine.effectiveEnvironment
+                val nodePath = nodeJsInterpreter.referenceName
+                val nodeBinDir = nodePath.substring(0, nodePath.lastIndexOfAny(charArrayOf('/', '\\')))
+                commandLine.environment["PATH"] = nodeBinDir + File.pathSeparator + effectiveEnvironment["PATH"]
+            }
+            val testUniqueName = getTestUniqueName(testedVirtualFile, testName)
+            try {
+                val generalCommandLine = if (Registry.`is`("run.anything.use.pty", false)) PtyCommandLine(commandLine) else commandLine
+                val runAnythingRunProfile = RunViteProfile(generalCommandLine, commandString)
+                if (watch) { // watch mode
+                    val environment = ExecutionEnvironmentBuilder.create(project, executor, runAnythingRunProfile)
+                        .dataContext(commandDataContext)
+                        .build()
+                    environment.runner.execute(environment) {
+                        it.processHandler!!.addProcessListener(object : ProcessAdapter() {
+                            override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
+                                if (event.text.startsWith("Test Files ")) {
+                                    val succeeded = !event.text.contains("failed")
+                                    processTestResult(succeeded, testUniqueName, testName, project, testedVirtualFile)
+                                }
+                            }
+                        })
+                    }
+                } else {
+                    val environment = ExecutionEnvironmentBuilder.create(project, executor, runAnythingRunProfile)
+                        .dataContext(commandDataContext)
+                        .build()
+                    environment.runner.execute(environment) {
+                        it.processHandler!!.addProcessListener(object : OutputListener(StringBuilder(), StringBuilder()) {
+                            override fun processTerminated(event: ProcessEvent) {
+                                super.processTerminated(event)
+                                val succeeded = event.exitCode == 0
+                                processTestResult(succeeded, testUniqueName, testName, project, testedVirtualFile)
+                            }
+                        })
+                    }
+                }
+            } catch (e: ExecutionException) {
+                Messages.showInfoMessage(project, e.message, IdeBundle.message("run.anything.console.error.title"))
+            }
+        }
+
+        private fun processTestResult(succeeded: Boolean, testUniqueName: String, testName: String, project: Project, testedVirtualFile: VirtualFile) {
+            val testStatus = if (succeeded) "passed" else "failed"
+            val assertionResult = AssertionResult().apply {
+                startTime = System.currentTimeMillis()
+                fullName = testUniqueName
+                title = testName
+                status = testStatus
+            }
+            val previousAssertionResult = findTestResult(project, testedVirtualFile, testName)
+            var refreshRequired = false
+            if (previousAssertionResult == null) {
+                if (!succeeded) {
+                    refreshRequired = true;
+                }
+            } else {
+                if (previousAssertionResult.isSuccess() != succeeded) {
+                    refreshRequired = true
+                }
+            }
+            testResults[testUniqueName] = assertionResult
+            if (refreshRequired) { //refresh required
+                ApplicationManager.getApplication().runReadAction {
+                    PsiManager.getInstance(project).findFile(testedVirtualFile)?.let { psiFile ->
+                        DaemonCodeAnalyzer.getInstance(project).restart(psiFile)
+                    }
+                }
+            }
+        }
+
+        fun findTestResult(project: Project, testedVirtualFile: VirtualFile, testName: String): AssertionResult? {
+            val testUniqueName = getTestUniqueName(testedVirtualFile, testName)
+            val testedFilePath = testedVirtualFile.path
+            var assertionResult = testResults[testUniqueName]
+            if (assertionResult == null) {
+                assertionResult = project.getService(VitestService::class.java).findTestResult(testedFilePath, testName)
+            } else {
+                val assertionResult2 = project.getService(VitestService::class.java).findTestResult(testedFilePath, testName)
+                if (assertionResult2?.startTime != null) {
+                    if (assertionResult2.startTime!! > assertionResult.startTime!!) {
+                        assertionResult = assertionResult2
+                    }
+                }
+            }
+            return assertionResult;
+        }
+
+        private fun getTestUniqueName(testedVirtualFile: VirtualFile, testName: String): String {
+            return "${testedVirtualFile.path}?${testName}"
+        }
     }
 
     fun isVitestTestMethod(jsCallExpression: JSCallExpression): Boolean {
@@ -69,167 +229,6 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
             }
         }
         return false
-    }
-
-
-    fun runSingleVitest(jsCallExpression: JSCallExpression, watch: Boolean) {
-        val arguments = jsCallExpression.arguments
-        val project = jsCallExpression.project
-        val testedVirtualFile = jsCallExpression.containingFile.virtualFile
-        var workDir = project.guessProjectDir()!!
-        // sub project support #5
-        val packageJson = PackageJsonUtil.findUpPackageJson(testedVirtualFile)
-        if (packageJson != null) {
-            val packageJsonDir = packageJson.parent
-            if (packageJsonDir != workDir) {
-                workDir = packageJsonDir
-            }
-        }
-        val relativePath = VfsUtil.getRelativePath(testedVirtualFile, workDir)!!
-        val testName = arguments[0].text.trim {
-            it == '\'' || it == '"'
-        }.replace("'", "\\'")
-        val prefix = if (project.getService(VitestService::class.java).yarn3Enabled) {
-            if (SystemInfo.isWindows) {
-                yarn3WindowsPrefix
-            } else {
-                yarn3Prefix
-            }
-        } else {
-            if (SystemInfo.isWindows) {
-                npmWindowsPrefix
-            } else {
-                npmPrefix
-            }
-        }
-        val vitestCommand = if (watch) {
-            "$prefix -t '${testName}' $relativePath"
-        } else {
-            "$prefix run -t '${testName}' $relativePath"
-        }
-        runCommand(
-            project,
-            workDir,
-            testedVirtualFile,
-            relativePath,
-            testName,
-            watch,
-            vitestCommand,
-            DefaultRunExecutor.getRunExecutorInstance(),
-            SimpleDataContext.getProjectContext(project)
-        )
-    }
-
-    open fun runCommand(
-        project: Project,
-        workDirectory: VirtualFile,
-        testedVirtualFile: VirtualFile,
-        relativePath: String,
-        testName: String,
-        watch: Boolean,
-        commandString: String,
-        executor: Executor,
-        dataContext: DataContext
-    ) {
-        var commandDataContext = dataContext
-        commandDataContext = RunAnythingCommandCustomizer.customizeContext(commandDataContext)
-        val initialCommandLine = GeneralCommandLine(ParametersListUtil.parse(commandString, false, true))
-            .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.SYSTEM)
-            .withWorkDirectory(workDirectory.path)
-        val commandLine = RunAnythingCommandCustomizer.customizeCommandLine(commandDataContext, workDirectory, initialCommandLine)
-        // use configured nodejs interpreter
-        val nodeJsInterpreter = NodeJsInterpreterManager.getInstance(project).interpreter
-        if (nodeJsInterpreter != null) {
-            val effectiveEnvironment = commandLine.effectiveEnvironment
-            val nodePath = nodeJsInterpreter.referenceName
-            val nodeBinDir = nodePath.substring(0, nodePath.lastIndexOfAny(charArrayOf('/', '\\')))
-            commandLine.environment["PATH"] = nodeBinDir + File.pathSeparator + effectiveEnvironment["PATH"]
-        }
-        val testUniqueName = getTestUniqueName(testedVirtualFile, testName)
-        try {
-            val generalCommandLine = if (Registry.`is`("run.anything.use.pty", false)) PtyCommandLine(commandLine) else commandLine
-            val runAnythingRunProfile = RunViteProfile(generalCommandLine, commandString)
-            if (watch) { // watch mode
-                val environment = ExecutionEnvironmentBuilder.create(project, executor, runAnythingRunProfile)
-                    .dataContext(commandDataContext)
-                    .build()
-                environment.runner.execute(environment) {
-                    it.processHandler!!.addProcessListener(object : ProcessAdapter() {
-                        override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
-                            if (event.text.startsWith("Test Files ")) {
-                                val succeeded = !event.text.contains("failed")
-                                processTestResult(succeeded, testUniqueName, testName, project, testedVirtualFile)
-                            }
-                        }
-                    })
-                }
-            } else {
-                val environment = ExecutionEnvironmentBuilder.create(project, executor, runAnythingRunProfile)
-                    .dataContext(commandDataContext)
-                    .build()
-                environment.runner.execute(environment) {
-                    it.processHandler!!.addProcessListener(object : OutputListener(StringBuilder(), StringBuilder()) {
-                        override fun processTerminated(event: ProcessEvent) {
-                            super.processTerminated(event)
-                            val succeeded = event.exitCode == 0
-                            processTestResult(succeeded, testUniqueName, testName, project, testedVirtualFile)
-                        }
-                    })
-                }
-            }
-        } catch (e: ExecutionException) {
-            Messages.showInfoMessage(project, e.message, IdeBundle.message("run.anything.console.error.title"))
-        }
-    }
-
-    private fun processTestResult(succeeded: Boolean, testUniqueName: String, testName: String, project: Project, testedVirtualFile: VirtualFile) {
-        val testStatus = if (succeeded) "passed" else "failed"
-        val assertionResult = AssertionResult().apply {
-            startTime = System.currentTimeMillis()
-            fullName = testUniqueName
-            title = testName
-            status = testStatus
-        }
-        val previousAssertionResult = findTestResult(project, testedVirtualFile, testName)
-        var refreshRequired = false
-        if (previousAssertionResult == null) {
-            if (!succeeded) {
-                refreshRequired = true;
-            }
-        } else {
-            if (previousAssertionResult.isSuccess() != succeeded) {
-                refreshRequired = true
-            }
-        }
-        testResults[testUniqueName] = assertionResult
-        if (refreshRequired) { //refresh required
-            ApplicationManager.getApplication().runReadAction {
-                PsiManager.getInstance(project).findFile(testedVirtualFile)?.let { psiFile ->
-                    DaemonCodeAnalyzer.getInstance(project).restart(psiFile)
-                }
-            }
-        }
-    }
-
-    fun findTestResult(project: Project, testedVirtualFile: VirtualFile, testName: String): AssertionResult? {
-        val testUniqueName = getTestUniqueName(testedVirtualFile, testName)
-        val testedFilePath = testedVirtualFile.path
-        var assertionResult = testResults[testUniqueName]
-        if (assertionResult == null) {
-            assertionResult = project.getService(VitestService::class.java).findTestResult(testedFilePath, testName)
-        } else {
-            val assertionResult2 = project.getService(VitestService::class.java).findTestResult(testedFilePath, testName)
-            if (assertionResult2?.startTime != null) {
-                if (assertionResult2.startTime!! > assertionResult.startTime!!) {
-                    assertionResult = assertionResult2
-                }
-            }
-        }
-        return assertionResult;
-    }
-
-    private fun getTestUniqueName(testedVirtualFile: VirtualFile, testName: String): String {
-        return "${testedVirtualFile.path}?${testName}"
     }
 
 }
