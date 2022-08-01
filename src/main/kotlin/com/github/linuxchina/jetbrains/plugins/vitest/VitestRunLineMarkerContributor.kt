@@ -20,12 +20,12 @@ class VitestRunLineMarkerContributor : RunLineMarkerContributor() {
         if (element is JSCallExpression) {
             val firstChild = element.firstChild
             if (firstChild != null && firstChild is JSReferenceExpression && VitestBaseRunLineMarkerProvider.vitestTestMethodNames.contains(firstChild.text)) {
-                val watchAction = object : AnAction("Watch", "Run Vitest With Watch Mode", watchIcon) {
+                val watchAction = object : AnAction("Watch", "Run Vitest with watch mode", watchIcon) {
                     override fun actionPerformed(e: AnActionEvent) {
                         VitestBaseRunLineMarkerProvider.runSingleVitest(element, true)
                     }
                 }
-                val debugAction = object : AnAction("Debugger", "Debug Vitest test", debuggerIcon) {
+                val debugAction = object : AnAction("Debug", "Debug Vitest test", debuggerIcon) {
                     override fun actionPerformed(e: AnActionEvent) {
                         val dataContext = SimpleDataContext.getSimpleContext(Location.DATA_KEY, PsiLocation(element), e.dataContext)
                         val context = ConfigurationContext.getFromContext(dataContext, e.place)
