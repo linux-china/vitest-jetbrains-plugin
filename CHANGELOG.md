@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+## [0.6.0]
+
+### Fixed
+
+- Add debug support to run Vitest tests
+
 ## [0.5.1]
 
 ### Fixed
