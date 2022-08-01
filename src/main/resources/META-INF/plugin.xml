@@ -6,10 +6,14 @@
 
     <depends>com.intellij.modules.platform</depends>
     <depends>JavaScript</depends>
+    <depends>NodeJS</depends>
 
     <extensions defaultExtensionNs="com.intellij">
         <codeInsight.lineMarkerProvider language="JavaScript" implementationClass="com.github.linuxchina.jetbrains.plugins.vitest.VitestRunnerMarkerProvider"/>
-        <codeInsight.lineMarkerProvider language="JavaScript" implementationClass="com.github.linuxchina.jetbrains.plugins.vitest.VitestWatchedRunnerMarkerProvider"/>
+        <!-- <codeInsight.lineMarkerProvider language="JavaScript" implementationClass="com.github.linuxchina.jetbrains.plugins.vitest.VitestWatchedRunnerMarkerProvider"/>-->
+        <runLineMarkerContributor language="JavaScript" implementationClass="com.github.linuxchina.jetbrains.plugins.vitest.VitestRunLineMarkerContributor"/>
+        <configurationType implementation="com.jetbrains.nodejs.run.VitestConfigurationType"/>
+        <runConfigurationProducer implementation="com.github.linuxchina.jetbrains.plugins.vitest.VitestTestRunConfigurationProducer"/>
         <fileIconProvider implementation="com.github.linuxchina.jetbrains.plugins.vitest.VitestFileIconProvider"/>
         <projectService serviceImplementation="com.github.linuxchina.jetbrains.plugins.vitest.VitestService"/>
         <toolWindow id="Vitest" icon="/vitest-16.png" anchor="right"
