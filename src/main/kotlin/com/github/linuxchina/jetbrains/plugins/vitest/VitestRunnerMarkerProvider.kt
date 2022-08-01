@@ -11,7 +11,7 @@ class VitestRunnerMarkerProvider : VitestBaseRunLineMarkerProvider() {
 
 
     override fun getName(): String {
-        return "Run vitest test"
+        return "Run Vitest test"
     }
 
     override fun getIcon(): Icon {
@@ -47,7 +47,7 @@ class VitestRunnerMarkerProvider : VitestBaseRunLineMarkerProvider() {
                     },
                     GutterIconRenderer.Alignment.CENTER,
                     {
-                        "Run $testName"
+                        "Run $testName by Vitest"
                     }
                 )
             }
