@@ -9,6 +9,7 @@ import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.jetbrains.nodejs.run.NodeJsRunConfiguration
 import com.jetbrains.nodejs.run.NodeJsRunConfigurationType
@@ -30,10 +31,9 @@ class VitestTestRunConfigurationProducer : LazyRunConfigurationProducer<NodeJsRu
         val applicationParameters = configuration.applicationParameters!!
         val runnerName = configuration.name
         val testName = VitestBaseRunLineMarkerProvider.getVitestTestName(jsCallExpression)
-        val fileName = location.virtualFile!!.name
         val filePath = applicationParameters.substring(applicationParameters.lastIndexOf(' ') + 1)
-        val uniqueName = "${testName}@${fileName}"
-        return file.path.endsWith(filePath) && runnerName.contains(uniqueName)
+        val uniqueName = getTestRunConfigurationName(testName, location.virtualFile!!)
+        return file.path.endsWith(filePath) && runnerName == uniqueName
     }
 
     override fun setupConfigurationFromContext(configuration: NodeJsRunConfiguration, context: ConfigurationContext, sourceElement: Ref<PsiElement>): Boolean {
@@ -47,7 +47,7 @@ class VitestTestRunConfigurationProducer : LazyRunConfigurationProducer<NodeJsRu
         val projectDir = project.guessProjectDir()!!
         val testName = VitestBaseRunLineMarkerProvider.getVitestTestName(jsCallExpression)
         val relativePath = VfsUtil.getRelativePath(virtualFile, projectDir)!!
-        configuration.name = testName + "@" + virtualFile.name + " by Vitest"
+        configuration.name = getTestRunConfigurationName(testName, virtualFile)
         configuration.workingDirectory = projectDir.path
         val vitestMjsPath = if (SystemInfo.isWindows) {
             ".\\node_modules\\vitest\\vitest.mjs"
@@ -59,5 +59,8 @@ class VitestTestRunConfigurationProducer : LazyRunConfigurationProducer<NodeJsRu
         return true
     }
 
+    private fun getTestRunConfigurationName(testName: String, virtualFile: VirtualFile): String {
+        return testName + "@" + virtualFile.name + " by Vitest"
+    }
 
 }
