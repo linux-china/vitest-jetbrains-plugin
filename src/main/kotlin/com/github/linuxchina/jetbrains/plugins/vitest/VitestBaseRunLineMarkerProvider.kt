@@ -46,8 +46,14 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
         private const val yarn3WindowsPrefix = "yarn.cmd exec -- vitest "
         private val testResults = mutableMapOf<String, AssertionResult>()
 
-        fun runSingleVitest(jsCallExpression: JSCallExpression, watch: Boolean) {
+        fun getVitestTestName(jsCallExpression: JSCallExpression): String {
             val arguments = jsCallExpression.arguments
+            return arguments[0].text.trim {
+                it == '\'' || it == '"'
+            }.replace("'", "\\'")
+        }
+
+        fun runSingleVitest(jsCallExpression: JSCallExpression, watch: Boolean) {
             val project = jsCallExpression.project
             val testedVirtualFile = jsCallExpression.containingFile.virtualFile
             var workDir = project.guessProjectDir()!!
@@ -60,9 +66,7 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
                 }
             }
             val relativePath = VfsUtil.getRelativePath(testedVirtualFile, workDir)!!
-            val testName = arguments[0].text.trim {
-                it == '\'' || it == '"'
-            }.replace("'", "\\'")
+            val testName = getVitestTestName(jsCallExpression)
             val prefix = if (project.getService(VitestService::class.java).yarn3Enabled) {
                 if (SystemInfo.isWindows) {
                     yarn3WindowsPrefix
