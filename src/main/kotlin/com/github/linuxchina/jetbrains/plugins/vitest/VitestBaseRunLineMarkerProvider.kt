@@ -49,8 +49,8 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
         fun getVitestTestName(jsCallExpression: JSCallExpression): String {
             val arguments = jsCallExpression.arguments
             return arguments[0].text.trim {
-                it == '\'' || it == '"'
-            }.replace("'", "\\'")
+                it == '\'' || it == '"' || it == '`'
+            }.replace("\"", "\\\"")
         }
 
         fun runSingleVitest(jsCallExpression: JSCallExpression, watch: Boolean) {
@@ -81,9 +81,9 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
                 }
             }
             val vitestCommand = if (watch) {
-                "$prefix -t '${testName}' $relativePath"
+                "$prefix -t \"${testName}\" $relativePath"
             } else {
-                "$prefix run -t '${testName}' $relativePath"
+                "$prefix run -t \"${testName}\" $relativePath"
             }
             runCommand(
                 project,
