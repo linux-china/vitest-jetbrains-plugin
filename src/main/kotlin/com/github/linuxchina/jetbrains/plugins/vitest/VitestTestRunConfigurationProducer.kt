@@ -24,7 +24,7 @@ class VitestTestRunConfigurationProducer : LazyRunConfigurationProducer<NodeJsRu
         val location = context.location ?: return false
         val file = location.virtualFile ?: return false
         if (!file.isInLocalFileSystem) return false
-        val jsCallExpression = context.location!!.psiElement
+        val jsCallExpression = location.psiElement
         if (jsCallExpression !is JSCallExpression) {
             return false
         }
@@ -55,7 +55,7 @@ class VitestTestRunConfigurationProducer : LazyRunConfigurationProducer<NodeJsRu
             "./node_modules/vitest/vitest.mjs"
         }
         configuration.inputPath = vitestMjsPath
-        configuration.applicationParameters = "run --threads false -t '${testName}' $relativePath"
+        configuration.applicationParameters = "run --threads false -t \"${testName}\" $relativePath"
         return true
     }
 
