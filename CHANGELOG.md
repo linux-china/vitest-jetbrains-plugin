@@ -6,8 +6,9 @@
 
 ## [0.6.0]
 
-### Fixed
-
+### Added
+          
+- Adjust Vitest line mark icons: green icon to run test, and Vitest icon to debug or run by watch mode 
 - Add debug support to run Vitest tests
 
 ## [0.5.1]
