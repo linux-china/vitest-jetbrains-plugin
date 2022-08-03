@@ -55,7 +55,11 @@ class VitestTestRunConfigurationProducer : LazyRunConfigurationProducer<NodeJsRu
             "./node_modules/vitest/vitest.mjs"
         }
         configuration.inputPath = vitestMjsPath
-        configuration.applicationParameters = "run --threads false -t \"${testName}\" $relativePath"
+        var extraOptions = ""
+        if (project.getService(VitestService::class.java).c8Available) {
+            extraOptions = "--coverage"
+        }
+        configuration.applicationParameters = "run --threads false $extraOptions -t \"${testName}\" $relativePath"
         return true
     }
 
