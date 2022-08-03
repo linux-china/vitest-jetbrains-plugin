@@ -21,6 +21,7 @@ class VitestService(private val project: Project) {
     var globalServiceEnabled = false
     var yarn3Enabled = false
     var c8Available = false
+    var workspacesAvailable = false
     private val objectMapper = ObjectMapper().apply {
         configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
     }
@@ -74,6 +75,7 @@ class VitestService(private val project: Project) {
                 val packageJsonText = PsiManager.getInstance(project).findFile(it)!!.text
                 yarn3Enabled = packageJsonText.contains("packageManager") && packageJsonText.contains("yarn@3")
                 c8Available = packageJsonText.contains("\"c8\"")
+                workspacesAvailable = packageJsonText.contains("\"workspaces\"")
             }
         }
     }
