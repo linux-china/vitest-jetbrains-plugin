@@ -53,19 +53,28 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
             }.replace("\"", "\\\"")
         }
 
-        fun runSingleVitest(jsCallExpression: JSCallExpression, watch: Boolean) {
-            val project = jsCallExpression.project
-            val testedVirtualFile = jsCallExpression.containingFile.virtualFile
-            var workDir = project.guessProjectDir()!!
-            // sub project support #5
+        fun getWorkingDir(project: Project, testedVirtualFile: VirtualFile): VirtualFile {
+            var workingDir = project.guessProjectDir()!!
+            // if workspaces available, workdir will be project dir
+            if (project.getService(VitestService::class.java).workspacesAvailable) {
+                return workingDir
+            }
+            // subproject independent support #5
             val packageJson = PackageJsonUtil.findUpPackageJson(testedVirtualFile)
             if (packageJson != null) {
                 val packageJsonDir = packageJson.parent
-                if (packageJsonDir != workDir) {
-                    workDir = packageJsonDir
+                if (packageJsonDir != workingDir) {
+                    workingDir = packageJsonDir
                 }
             }
-            val relativePath = VfsUtil.getRelativePath(testedVirtualFile, workDir)!!
+            return workingDir
+        }
+
+        fun runSingleVitest(jsCallExpression: JSCallExpression, watch: Boolean) {
+            val project = jsCallExpression.project
+            val testedVirtualFile = jsCallExpression.containingFile.virtualFile
+            val workingDir = getWorkingDir(project, testedVirtualFile)
+            val relativePath = VfsUtil.getRelativePath(testedVirtualFile, workingDir)!!
             val testName = getVitestTestName(jsCallExpression)
             val prefix = if (project.getService(VitestService::class.java).yarn3Enabled) {
                 if (SystemInfo.isWindows) {
@@ -87,7 +96,7 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
             }
             runCommand(
                 project,
-                workDir,
+                workingDir,
                 testedVirtualFile,
                 relativePath,
                 testName,
