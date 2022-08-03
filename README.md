@@ -25,6 +25,9 @@ Please install [Awesome Console](https://plugins.jetbrains.com/plugin/7677-aweso
           
 * If `workspaces` declared in `package.json`, and working directory is project's root directory.
 * Vitest Runner will resolve proximate `package.json` for Vitest tested file, and working directory may be project's root directory or subdirectory of subproject.
+                
+**Attention**: for mono repository with subprojects independent, working directory will be subproject's directory, 
+and Vitest Runner will use `vite.config.js` inside subproject. 
 
 # Vitest debug support
 
