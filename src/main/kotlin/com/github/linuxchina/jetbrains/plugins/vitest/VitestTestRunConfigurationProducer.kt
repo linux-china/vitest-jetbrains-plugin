@@ -1,5 +1,6 @@
 package com.github.linuxchina.jetbrains.plugins.vitest
 
+import com.github.linuxchina.jetbrains.plugins.vitest.VitestBaseRunLineMarkerProvider.Companion.getWorkingDir
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.LazyRunConfigurationProducer
 import com.intellij.execution.configurations.ConfigurationFactory
@@ -42,13 +43,13 @@ class VitestTestRunConfigurationProducer : LazyRunConfigurationProducer<NodeJsRu
             return false
         }
         val psiFile = jsCallExpression.containingFile
-        val virtualFile = psiFile.virtualFile ?: return false
+        val testedVirtualFile = psiFile.virtualFile ?: return false
         val project = psiFile.project
         val projectDir = project.guessProjectDir()!!
         val testName = VitestBaseRunLineMarkerProvider.getVitestTestName(jsCallExpression)
-        val relativePath = VfsUtil.getRelativePath(virtualFile, projectDir)!!
-        configuration.name = getTestRunConfigurationName(testName, virtualFile)
-        configuration.workingDirectory = projectDir.path
+        val relativePath = VfsUtil.getRelativePath(testedVirtualFile, projectDir)!!
+        configuration.name = getTestRunConfigurationName(testName, testedVirtualFile)
+        configuration.workingDirectory = getWorkingDir(project, testedVirtualFile).path
         val vitestMjsPath = if (SystemInfo.isWindows) {
             ".\\node_modules\\vitest\\vitest.mjs"
         } else {
