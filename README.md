@@ -21,6 +21,23 @@ Please install [Awesome Console](https://plugins.jetbrains.com/plugin/7677-aweso
 
 <!-- Plugin description end -->
 
+# How Vitest Runner plugin resolves working directory?
+          
+* If `workspaces` declared in `package.json`, and working directory is project's root directory.
+* Vitest Runner will resolve proximate `package.json` for Vitest tested file, and working directory may be project's root directory or subdirectory of subproject.
+
+# Vitest debug support
+
+* How about `--coverage` support? Please add `c8` dependency in package.json and reopen the project.
+
+```json
+{
+  "devDependencies": {
+   "c8": "^7.12.0"
+  }
+}
+```
+
 # Screenshot
 
 ![Vitest](screenshot.png)
