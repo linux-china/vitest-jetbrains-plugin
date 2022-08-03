@@ -8,7 +8,7 @@
 
 ### Fixed
           
-- Adjust `--coverage` option for debug if `c8` dependency declared in package.json 
+- Add `--coverage` option for debug if `c8` dependency declared in package.json 
 - Adjust working directory: root directory for workspaces, and proximate `package.json` directory for tested file.
 
 ## [0.6.0]
