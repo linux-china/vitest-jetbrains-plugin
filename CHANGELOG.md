@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+## [0.6.2]
+
+### Fixed
+          
+- Fix test name with backticks 
+
 ## [0.6.1]
 
 ### Fixed
