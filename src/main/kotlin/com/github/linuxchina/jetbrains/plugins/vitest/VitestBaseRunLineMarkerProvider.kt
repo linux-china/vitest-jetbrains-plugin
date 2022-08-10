@@ -48,9 +48,13 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
 
         fun getVitestTestName(jsCallExpression: JSCallExpression): String {
             val arguments = jsCallExpression.arguments
-            return arguments[0].text.trim {
-                it == '\'' || it == '"' || it == '`'
-            }.replace("\"", "\\\"")
+            var commandName = arguments[0].text
+            if (commandName[0] == commandName[commandName.length - 1]) {
+                if (arrayListOf('\'', '"', '`').contains(commandName[0])) {
+                    commandName = commandName.substring(1, commandName.length - 1)
+                }
+            }
+            return commandName.replace("\"", "\\\"").replace("`", "\\`")
         }
 
         fun getWorkingDir(project: Project, testedVirtualFile: VirtualFile): VirtualFile {
