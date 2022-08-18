@@ -80,14 +80,15 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
             val workingDir = getWorkingDir(project, testedVirtualFile)
             val relativePath = VfsUtil.getRelativePath(testedVirtualFile, workingDir)!!
             val testName = getVitestTestName(jsCallExpression)
+            val isWindows = SystemInfo.isWindows || System.getProperty("os.version").contains("WSL")
             val prefix = if (project.getService(VitestService::class.java).yarn3Enabled) {
-                if (SystemInfo.isWindows) {
+                if (isWindows) {
                     yarn3WindowsPrefix
                 } else {
                     yarn3Prefix
                 }
             } else {
-                if (SystemInfo.isWindows) {
+                if (isWindows) {
                     npmWindowsPrefix
                 } else {
                     npmPrefix
