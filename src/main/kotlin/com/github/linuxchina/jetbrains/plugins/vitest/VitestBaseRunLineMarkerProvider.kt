@@ -15,6 +15,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.runAnything.commands.RunAnythingCommandCustomizer
 import com.intellij.ide.actions.runAnything.execution.RunAnythingRunProfile
 import com.intellij.javascript.nodejs.interpreter.NodeJsInterpreterManager
+import com.intellij.javascript.nodejs.npm.NpmManager
 import com.intellij.lang.javascript.buildTools.npm.PackageJsonUtil
 import com.intellij.lang.javascript.psi.JSCallExpression
 import com.intellij.lang.javascript.psi.JSDestructuringElement
@@ -74,15 +75,13 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
             return workingDir
         }
 
-        fun runSingleVitest(jsCallExpression: JSCallExpression, watch: Boolean) {
-            val project = jsCallExpression.project
-            val testedVirtualFile = jsCallExpression.containingFile.virtualFile
-            val workingDir = getWorkingDir(project, testedVirtualFile)
-            val relativePath = VfsUtil.getRelativePath(testedVirtualFile, workingDir)!!
-            val testName = getVitestTestName(jsCallExpression)
-            // Windows but not WSL
+        private fun getVitestPrefix(project: Project, workingDir: VirtualFile): String {
+            val nodePackage = NpmManager.getInstance(project).`package`?.systemDependentPath
+            if (nodePackage != null) {
+                return "$nodePackage exec -- vitest";
+            }
             val isWindows = SystemInfo.isWindows && !workingDir.path.contains("wsl$")
-            val prefix = if (project.getService(VitestService::class.java).yarn3Enabled) {
+            return if (project.getService(VitestService::class.java).yarn3Enabled) {
                 if (isWindows) {
                     yarn3WindowsPrefix
                 } else {
@@ -95,6 +94,15 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
                     npmPrefix
                 }
             }
+        }
+
+        fun runSingleVitest(jsCallExpression: JSCallExpression, watch: Boolean) {
+            val project = jsCallExpression.project
+            val testedVirtualFile = jsCallExpression.containingFile.virtualFile
+            val workingDir = getWorkingDir(project, testedVirtualFile)
+            val relativePath = VfsUtil.getRelativePath(testedVirtualFile, workingDir)!!
+            val testName = getVitestTestName(jsCallExpression)
+            val prefix = getVitestPrefix(project, workingDir);
             val vitestCommand = if (watch) {
                 "$prefix -t \"${testName}\" $relativePath"
             } else {
@@ -138,6 +146,7 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
                 val nodeBinDir = nodePath.substring(0, nodePath.lastIndexOfAny(charArrayOf('/', '\\')))
                 commandLine.environment["PATH"] = nodeBinDir + File.pathSeparator + effectiveEnvironment["PATH"]
             }
+            val nodePackage = NpmManager.getInstance(project).`package`?.systemDependentPath
             val testUniqueName = getTestUniqueName(testedVirtualFile, testName)
             try {
                 val generalCommandLine = if (Registry.`is`("run.anything.use.pty", false)) PtyCommandLine(commandLine) else commandLine
