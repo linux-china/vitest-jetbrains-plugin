@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+## [0.6.3]
+
+### Fixed
+
+- Add Node v14 support by `npx vitest`
+
 ## [0.6.2]
 
 ### Fixed
