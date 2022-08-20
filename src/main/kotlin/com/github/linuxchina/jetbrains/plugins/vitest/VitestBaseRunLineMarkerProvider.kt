@@ -76,11 +76,18 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
         }
 
         private fun getVitestPrefix(project: Project, workingDir: VirtualFile): String {
-            val nodePackage = NpmManager.getInstance(project).`package`?.systemDependentPath
-            if (nodePackage != null) {
-                return "$nodePackage exec -- vitest";
-            }
             val isWindows = SystemInfo.isWindows && !workingDir.path.contains("wsl$")
+            val nodePackage = NpmManager.getInstance(project).`package`?.systemDependentPath
+            if (project.getService(VitestService::class.java).nodeVersion <= 14) {
+                return if (isWindows) {
+                    "npx.cmd vitest"
+                } else {
+                    "npx vitest"
+                }
+            }
+            if (nodePackage != null) {
+                return "$nodePackage exec -- vitest"
+            }
             return if (project.getService(VitestService::class.java).yarn3Enabled) {
                 if (isWindows) {
                     yarn3WindowsPrefix
@@ -146,7 +153,6 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
                 val nodeBinDir = nodePath.substring(0, nodePath.lastIndexOfAny(charArrayOf('/', '\\')))
                 commandLine.environment["PATH"] = nodeBinDir + File.pathSeparator + effectiveEnvironment["PATH"]
             }
-            val nodePackage = NpmManager.getInstance(project).`package`?.systemDependentPath
             val testUniqueName = getTestUniqueName(testedVirtualFile, testName)
             try {
                 val generalCommandLine = if (Registry.`is`("run.anything.use.pty", false)) PtyCommandLine(commandLine) else commandLine
