@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.linuxchina.jetbrains.plugins.vitest.ui.VitestToolWindowPanel
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.javascript.nodejs.interpreter.NodeJsInterpreterManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
@@ -22,6 +23,7 @@ class VitestService(private val project: Project) {
     var yarn3Enabled = false
     var coverageAvailable = false
     var workspacesAvailable = false
+    var nodeVersion = 16
     private val objectMapper = ObjectMapper().apply {
         configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
     }
@@ -78,6 +80,11 @@ class VitestService(private val project: Project) {
                         || packageJsonText.contains("\"@vitest/coverage-c8\"")
                         || packageJsonText.contains("\"@vitest/coverage-istanbul\"")
                 workspacesAvailable = packageJsonText.contains("\"workspaces\"")
+            }
+        }
+        NodeJsInterpreterManager.getInstance(project).interpreter?.fetchVersion {
+            if (it != null) {
+                this.nodeVersion = it.major
             }
         }
     }
