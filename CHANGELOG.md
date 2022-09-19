@@ -8,7 +8,7 @@
 
 ### Fixed
 
-- Update working directory to package's directory if workspaces
+- Update working directory to package's directory if workspaces, and compatible with WebStorm run configuration.
 
 ## [0.6.3]
 
