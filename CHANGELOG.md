@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+## [0.6.4]
+
+### Fixed
+
+- Update working directory to package's directory if workspaces
+
 ## [0.6.3]
 
 ### Fixed
