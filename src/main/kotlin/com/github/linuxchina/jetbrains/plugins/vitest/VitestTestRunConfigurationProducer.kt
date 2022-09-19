@@ -31,7 +31,7 @@ class VitestTestRunConfigurationProducer : LazyRunConfigurationProducer<NodeJsRu
         }
         val applicationParameters = configuration.applicationParameters ?: return false
         val runnerName = configuration.name
-        val testName = VitestBaseRunLineMarkerProvider.getVitestTestName(jsCallExpression)
+        val testName = VitestBaseRunLineMarkerProvider.escapeVitestTestName(jsCallExpression)
         val filePath = applicationParameters.substring(applicationParameters.lastIndexOf(' ') + 1)
         val uniqueName = getTestRunConfigurationName(testName, location.virtualFile!!)
         return file.path.endsWith(filePath) && runnerName == uniqueName
@@ -46,7 +46,7 @@ class VitestTestRunConfigurationProducer : LazyRunConfigurationProducer<NodeJsRu
         val testedVirtualFile = psiFile.virtualFile ?: return false
         val project = psiFile.project
         val projectDir = project.guessProjectDir()!!
-        val testName = VitestBaseRunLineMarkerProvider.getVitestTestName(jsCallExpression)
+        val testName = VitestBaseRunLineMarkerProvider.escapeVitestTestName(jsCallExpression)
         val relativePath = VfsUtil.getRelativePath(testedVirtualFile, projectDir)!!
         configuration.name = getTestRunConfigurationName(testName, testedVirtualFile)
         configuration.workingDirectory = getWorkingDir(project, testedVirtualFile).path
