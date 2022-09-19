@@ -47,7 +47,13 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
         private const val yarn3WindowsPrefix = "yarn.cmd exec -- vitest "
         private val testResults = mutableMapOf<String, AssertionResult>()
 
-        fun getVitestTestName(jsCallExpression: JSCallExpression): String {
+        fun getTestDisplayName(testName: String): String {
+            return testName.trim {
+                it == '\'' || it == '"' || it == '`'
+            }
+        }
+
+        fun escapeVitestTestName(jsCallExpression: JSCallExpression): String {
             val arguments = jsCallExpression.arguments
             var commandName = arguments[0].text
             if (commandName[0] == commandName[commandName.length - 1]) {
@@ -55,7 +61,10 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
                     commandName = commandName.substring(1, commandName.length - 1)
                 }
             }
-            return commandName.replace("\"", "\\\"").replace("`", "\\`")
+            return commandName.replace("\"", "\\\"")
+                .replace("`", "\\`")
+                .replace(")", "\\)")
+                .replace("(", "\\(")
         }
 
         fun getWorkingDir(project: Project, testedVirtualFile: VirtualFile): VirtualFile {
@@ -108,7 +117,7 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
             val testedVirtualFile = jsCallExpression.containingFile.virtualFile
             val workingDir = getWorkingDir(project, testedVirtualFile)
             val relativePath = VfsUtil.getRelativePath(testedVirtualFile, workingDir)!!
-            val testName = getVitestTestName(jsCallExpression)
+            val testName = escapeVitestTestName(jsCallExpression)
             val prefix = getVitestPrefix(project, workingDir);
             val vitestCommand = if (watch) {
                 "$prefix -t \"${testName}\" $relativePath"
