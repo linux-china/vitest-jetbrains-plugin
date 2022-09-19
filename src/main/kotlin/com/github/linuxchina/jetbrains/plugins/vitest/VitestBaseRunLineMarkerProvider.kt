@@ -60,10 +60,10 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
 
         fun getWorkingDir(project: Project, testedVirtualFile: VirtualFile): VirtualFile {
             var workingDir = project.guessProjectDir()!!
-            // if workspaces available, workdir will be project dir
-            if (project.getService(VitestService::class.java).workspacesAvailable) {
+            // if workspaces available, workdir will be module dir
+            /*if (project.getService(VitestService::class.java).workspacesAvailable) {
                 return workingDir
-            }
+            }*/
             // subproject independent support #5
             val packageJson = PackageJsonUtil.findUpPackageJson(testedVirtualFile)
             if (packageJson != null) {
