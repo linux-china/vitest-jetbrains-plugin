@@ -9,6 +9,7 @@
 ### Fixed
 
 - Update working directory to package's directory if workspaces, and compatible with WebStorm run configuration.
+- Escape test name with `)` and `(`
 
 ## [0.6.3]
 
