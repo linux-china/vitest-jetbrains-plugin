@@ -243,7 +243,7 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
 
     fun isVitestTestMethod(jsCallExpression: JSCallExpression): Boolean {
         val firstChild = jsCallExpression.firstChild
-        if (firstChild != null && firstChild is JSReferenceExpression && vitestTestMethodNames.contains(firstChild.text)) {
+        if (firstChild != null && firstChild is JSReferenceExpression && vitestTestMethodNames.contains(firstChild.text.split(".")[0])) {
             val project = jsCallExpression.project
             if (project.getService(VitestService::class.java).globalServiceEnabled) {
                 return true
