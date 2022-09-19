@@ -23,7 +23,7 @@ Please install [Awesome Console](https://plugins.jetbrains.com/plugin/7677-aweso
 
 # How Vitest Runner plugin resolves working directory?
           
-* If `workspaces` declared in `package.json`, and working directory is project's root directory.
+* If `workspaces` declared in `package.json`, and working directory is package's directory.
 * Vitest Runner will resolve proximate `package.json` for Vitest tested file, and working directory may be project's root directory or subdirectory of subproject.
                 
 **Attention**: for mono repository with subprojects independent, working directory will be subproject's directory, 
