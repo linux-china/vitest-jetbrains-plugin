@@ -47,7 +47,8 @@ open class VitestBaseRunLineMarkerProvider : RunLineMarkerProvider() {
         private const val yarn3WindowsPrefix = "yarn.cmd exec -- vitest "
         private val testResults = mutableMapOf<String, AssertionResult>()
 
-        fun getTestDisplayName(testName: String): String {
+        fun getTestDisplayName(jsCallExpression: JSCallExpression): String {
+            val testName = jsCallExpression.arguments[0].text
             return testName.trim {
                 it == '\'' || it == '"' || it == '`'
             }

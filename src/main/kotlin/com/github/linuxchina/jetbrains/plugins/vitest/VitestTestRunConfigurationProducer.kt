@@ -46,9 +46,10 @@ class VitestTestRunConfigurationProducer : LazyRunConfigurationProducer<NodeJsRu
         val testedVirtualFile = psiFile.virtualFile ?: return false
         val project = psiFile.project
         val projectDir = project.guessProjectDir()!!
+        val testDisplayName = VitestBaseRunLineMarkerProvider.getTestDisplayName(jsCallExpression)
         val testName = VitestBaseRunLineMarkerProvider.escapeVitestTestName(jsCallExpression)
         val relativePath = VfsUtil.getRelativePath(testedVirtualFile, projectDir)!!
-        configuration.name = getTestRunConfigurationName(testName, testedVirtualFile)
+        configuration.name = getTestRunConfigurationName(testDisplayName, testedVirtualFile)
         configuration.workingDirectory = getWorkingDir(project, testedVirtualFile).path
         val vitestMjsPath = if (SystemInfo.isWindows) {
             "${projectDir.path}\\node_modules\\vitest\\vitest.mjs"
@@ -64,8 +65,8 @@ class VitestTestRunConfigurationProducer : LazyRunConfigurationProducer<NodeJsRu
         return true
     }
 
-    private fun getTestRunConfigurationName(testName: String, virtualFile: VirtualFile): String {
-        return testName + "@" + virtualFile.name + " by Vitest"
+    private fun getTestRunConfigurationName(testDisplayName: String, virtualFile: VirtualFile): String {
+        return testDisplayName + "@" + virtualFile.name + " by Vitest"
     }
 
 }

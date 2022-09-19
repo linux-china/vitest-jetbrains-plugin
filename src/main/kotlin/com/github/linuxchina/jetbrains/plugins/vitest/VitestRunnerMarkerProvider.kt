@@ -22,7 +22,7 @@ class VitestRunnerMarkerProvider : VitestBaseRunLineMarkerProvider() {
         if (psiElement is JSCallExpression) {
             if (isVitestTestMethod(psiElement) && psiElement.arguments.isNotEmpty()) {
                 val testMethod = psiElement.firstChild.text
-                val testName = getTestDisplayName( psiElement.arguments[0].text)
+                val testName = getTestDisplayName( psiElement)
                 var tooltip = "Run $testName"
                 var markIcon = runIcon
                 val testedVirtualFile = psiElement.containingFile.virtualFile
