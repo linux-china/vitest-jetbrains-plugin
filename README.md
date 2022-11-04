@@ -1,5 +1,7 @@
 # vitest-jetbrains-plugin
 
+**Deprecated**: from WebStorm 2022.3 Beta, Vitest support by default. Please refer https://blog.jetbrains.com/webstorm/2022/11/webstorm-2022-3-beta/#Vitest_support
+
 <!-- Plugin description -->
 A simple WebStorm plugin to run Vitest tests.
 
