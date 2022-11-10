@@ -52,9 +52,9 @@ class VitestTestRunConfigurationProducer : LazyRunConfigurationProducer<NodeJsRu
         configuration.name = getTestRunConfigurationName(testDisplayName, testedVirtualFile)
         configuration.workingDirectory = getWorkingDir(project, testedVirtualFile).path
         val vitestMjsPath = if (SystemInfo.isWindows) {
-            "${projectDir.path}\\node_modules\\vitest\\vitest.mjs"
+            "${configuration.workingDirectory}\\node_modules\\vitest\\vitest.mjs"
         } else {
-            "${projectDir.path}/node_modules/vitest/vitest.mjs"
+            "${configuration.workingDirectory}/node_modules/vitest/vitest.mjs"
         }
         configuration.inputPath = vitestMjsPath
         var extraOptions = ""

@@ -3,6 +3,8 @@
 # vitest-jetbrains-plugin Changelog
 
 ## [Unreleased]
+### Fixed
+- Use working directory for vitest.mjs to fix running tests having a different working directory than root 
 
 ## [0.6.4]
 
